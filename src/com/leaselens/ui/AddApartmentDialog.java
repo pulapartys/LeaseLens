@@ -485,6 +485,7 @@ public class AddApartmentDialog {
             updated.setNotes(notesArea.getText().trim());
             updated.setStatus(Status.valueOf(statusCombo.getValue()));
 
+            service.enrichWithApiData(updated);
             service.updateApartment(updated);
         } else {
             // adding new apartment
