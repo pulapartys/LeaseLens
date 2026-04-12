@@ -3,7 +3,7 @@ package com.leaselens.datastructures;
 import com.leaselens.model.NearbyPlace;
 
 /**
- * This interface is for Queue data structure
+ * Queue ADT (Abstract Data Type)
  * Queue is like line at store - first one in is first one out (FIFO)
  */
 public interface QueueInterface {

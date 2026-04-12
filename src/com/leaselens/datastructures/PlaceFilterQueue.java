@@ -3,7 +3,7 @@ package com.leaselens.datastructures;
 import com.leaselens.model.NearbyPlace;
 
 /**
- * This class is a simple FIFO queue for nearby places
+ * Linked List data structure implementing Queue ADT
  * FIFO means first in first out, like a line at a store
  * We use it to hold all the raw places from the API
  * Then we dequeue each one and check if it match the filter
