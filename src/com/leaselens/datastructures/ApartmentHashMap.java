@@ -50,7 +50,7 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
 
     /**
      * This method is calculating the hash code for a key
-     * It turn the key string into a number that is a valid index
+     * It add up all the characters to get a number
      * @param key the string key to hash
      * @return an index number between 0 and capacity-1
      *
@@ -58,16 +58,16 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
      * post-condition: a valid index is returned
      */
     private int hash(String key) {
-        int hashCode = 0;
+        // add up all the characters
+        int total = 0;
         for (int i = 0; i < key.length(); i++) {
-            char c = key.charAt(i);
-            hashCode = 31 * hashCode + c;
+            total = total + key.charAt(i);
         }
-        // make sure its positive and within range
-        if (hashCode < 0) {
-            hashCode = hashCode * -1;
+        // make sure its positive
+        if (total < 0) {
+            total = total * -1;
         }
-        return hashCode % capacity;
+        return total % capacity;
     }
 
     /**
@@ -170,7 +170,7 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
 
     /**
      * This method is searching for apartments that match a query
-     * It look through all keys and find ones that contain the search text
+     * It look through all apartments and check if name or address contain the search text
      * @param query the text to search for
      * @return list of apartments that match
      *
@@ -181,25 +181,18 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
         ArrayList<Apartment> results = new ArrayList<Apartment>();
         String lowerQuery = query.toLowerCase();
 
+        // loop through all buckets
         for (int i = 0; i < capacity; i++) {
             Entry current = table[i];
             while (current != null) {
-                // skip if key does not match the query
-                if (!current.key.contains(lowerQuery)) {
-                    current = current.next;
-                    continue;
-                }
+                Apartment apt = current.value;
 
-                // check if we already have this apartment in results
-                boolean alreadyAdded = false;
-                for (int j = 0; j < results.size(); j++) {
-                    if (results.get(j).getId().equals(current.value.getId())) {
-                        alreadyAdded = true;
-                        break;
-                    }
-                }
-                if (!alreadyAdded) {
-                    results.add(current.value);
+                // check if name or address contain the query
+                String name = apt.getName().toLowerCase();
+                String address = apt.getAddress().toLowerCase();
+
+                if (name.contains(lowerQuery) || address.contains(lowerQuery)) {
+                    results.add(apt);
                 }
                 current = current.next;
             }
