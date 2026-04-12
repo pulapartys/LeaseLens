@@ -1,7 +1,7 @@
 package com.leaselens.datastructures;
 
 /**
- * This interface is for Deque data structure
+ * Deque ADT (Abstract Data Type)
  * Deque is like queue but you can add and remove from both ends
  */
 public interface DequeInterface {
@@ -68,4 +68,13 @@ public interface DequeInterface {
      * post-condition: deque is not changed
      */
     public abstract boolean isEmpty();
+
+    /**
+     * This method is telling how many items are in deque
+     * @return the number of items
+     *
+     * pre-condition: none
+     * post-condition: deque is not changed
+     */
+    public abstract int size();
 }

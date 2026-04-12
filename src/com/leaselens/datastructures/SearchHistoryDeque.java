@@ -1,7 +1,7 @@
 package com.leaselens.datastructures;
 
 /**
- * This class is a deque (double ended queue) for search history
+ * Doubly Linked List data structure implementing Deque ADT for search history
  * Deque means you can add and remove from both front and back
  * We use it to save what the user searched for
  * When they click undo it remove the last search from the back
