@@ -1,0 +1,13 @@
+# Compiled class files
+*.class
+out/
+
+# JavaFX SDK (large binaries - users should download separately)
+lib/javafx-sdk-21.0.10/
+
+# IDE files
+.idea/
+*.iml
+
+# OS files
+.DS_Store
