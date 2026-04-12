@@ -24,7 +24,7 @@ import java.util.Comparator;
  * pre-condition: none
  * post-condition: service is created with all data structures ready
  */
-public class ApartmentService {
+public class ApartmentManager {
 
     // our data structures
     private ApartmentBag allApartments;
@@ -48,7 +48,7 @@ public class ApartmentService {
      * pre-condition: none
      * post-condition: all data structures is empty and ready to use
      */
-    public ApartmentService() {
+    public ApartmentManager() {
         allApartments = new ApartmentBag();
         searchMap = new ApartmentHashMap(100);
         undoStack = new UndoRedoStack();

@@ -4,7 +4,7 @@ import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 
 /**
  * This is the main window that hold all the tabs
@@ -15,7 +15,7 @@ import com.leaselens.app.ApartmentService;
 public class MainWindow {
 
     private Stage stage;
-    private ApartmentService service;
+    private ApartmentManager service;
     private DashboardTab dashboardTab;
     private ApartmentsTab apartmentsTab;
     private CompareTab compareTab;
@@ -31,7 +31,7 @@ public class MainWindow {
      */
     public MainWindow(Stage stage) {
         this.stage = stage;
-        this.service = new ApartmentService();
+        this.service = new ApartmentManager();
         buildUI();
     }
 

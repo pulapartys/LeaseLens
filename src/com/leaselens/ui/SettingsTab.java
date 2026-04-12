@@ -6,7 +6,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import com.leaselens.model.UserPreferences;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 
 /**
  * This is the Preferences tab for budget and priority settings
@@ -17,7 +17,7 @@ import com.leaselens.app.ApartmentService;
  */
 public class SettingsTab {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private VBox content;
     private TextField minBudgetField;
     private TextField maxBudgetField;
@@ -36,7 +36,7 @@ public class SettingsTab {
      * pre-condition: service not null
      * post-condition: settings tab is built
      */
-    public SettingsTab(ApartmentService service) {
+    public SettingsTab(ApartmentManager service) {
         this.service = service;
         this.content = new VBox(15);
         buildTab();

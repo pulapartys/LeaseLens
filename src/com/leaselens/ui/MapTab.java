@@ -10,7 +10,7 @@ import javafx.scene.paint.*;
 import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 
 /**
  * This is the Map View tab showing apartments on a real map
@@ -21,7 +21,7 @@ import com.leaselens.app.ApartmentService;
  */
 public class MapTab {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private VBox content;
     private Canvas tileCanvas;
     private Canvas markerCanvas;
@@ -39,7 +39,7 @@ public class MapTab {
      * pre-condition: service is not null
      * post-condition: map tab is ready to show
      */
-    public MapTab(ApartmentService service) {
+    public MapTab(ApartmentManager service) {
         this.service = service;
         this.content = new VBox(10);
         buildTab();

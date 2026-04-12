@@ -5,7 +5,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 import com.leaselens.datastructures.ExpenseHashMap;
 
 /**
@@ -18,7 +18,7 @@ import com.leaselens.datastructures.ExpenseHashMap;
  */
 public class ExpenseTab {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private ScrollPane content;
     private VBox mainBox;
     private ComboBox<String> apartmentCombo;
@@ -38,7 +38,7 @@ public class ExpenseTab {
      * pre-condition: service not null
      * post-condition: expense tab is built
      */
-    public ExpenseTab(ApartmentService service) {
+    public ExpenseTab(ApartmentManager service) {
         this.service = service;
         this.expenseMap = new ExpenseHashMap(50);
         this.mainBox = new VBox(15);

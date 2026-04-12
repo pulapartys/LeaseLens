@@ -5,7 +5,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 
 /**
  * This is the Compare tab where user pick 2 or 3 apartments
@@ -16,7 +16,7 @@ import com.leaselens.app.ApartmentService;
  */
 public class CompareTab {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private VBox content;
     private ComboBox<String> combo1;
     private ComboBox<String> combo2;
@@ -30,7 +30,7 @@ public class CompareTab {
      * pre-condition: service not null
      * post-condition: compare tab is built
      */
-    public CompareTab(ApartmentService service) {
+    public CompareTab(ApartmentManager service) {
         this.service = service;
         this.content = new VBox(15);
         buildTab();

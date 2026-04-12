@@ -8,7 +8,7 @@ import javafx.scene.text.*;
 import javafx.stage.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 
 /**
  * This is the popup dialog for adding or editing an apartment
@@ -19,7 +19,7 @@ import com.leaselens.app.ApartmentService;
  */
 public class AddApartmentDialog {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private Stage dialogStage;
     private boolean saved;
     private Apartment editingApartment;
@@ -57,7 +57,7 @@ public class AddApartmentDialog {
      * pre-condition: service not null
      * post-condition: dialog is ready
      */
-    public AddApartmentDialog(ApartmentService service) {
+    public AddApartmentDialog(ApartmentManager service) {
         this.service = service;
         this.saved = false;
         this.editingApartment = null;

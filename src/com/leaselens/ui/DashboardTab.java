@@ -7,7 +7,7 @@ import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
 import com.leaselens.model.UserPreferences;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 import com.leaselens.calculators.ScoreCalculator;
 import com.leaselens.datastructures.ApartmentSorter;
 
@@ -20,7 +20,7 @@ import com.leaselens.datastructures.ApartmentSorter;
  */
 public class DashboardTab {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private VBox content;
     private Label totalLabel;
     private Label shortlistedLabel;
@@ -37,7 +37,7 @@ public class DashboardTab {
      * pre-condition: service not null
      * post-condition: dashboard is built
      */
-    public DashboardTab(ApartmentService service) {
+    public DashboardTab(ApartmentManager service) {
         this.service = service;
         this.content = new VBox(15);
         buildTab();

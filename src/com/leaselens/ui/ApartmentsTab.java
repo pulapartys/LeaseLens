@@ -9,7 +9,7 @@ import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.NearbyPlace;
 import com.leaselens.model.Status;
-import com.leaselens.app.ApartmentService;
+import com.leaselens.app.ApartmentManager;
 import com.leaselens.datastructures.ApartmentSorter;
 import com.leaselens.datastructures.PlacePriorityQueue;
 import com.leaselens.datastructures.PlaceFilterQueue;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
  */
 public class ApartmentsTab {
 
-    private ApartmentService service;
+    private ApartmentManager service;
     private VBox content;
     private MapTab mapTab;
     private Runnable switchToMapTab;
@@ -45,7 +45,7 @@ public class ApartmentsTab {
      * pre-condition: service not null
      * post-condition: tab is built
      */
-    public ApartmentsTab(ApartmentService service) {
+    public ApartmentsTab(ApartmentManager service) {
         this.service = service;
         this.tableData = FXCollections.observableArrayList();
         this.content = new VBox(10);
