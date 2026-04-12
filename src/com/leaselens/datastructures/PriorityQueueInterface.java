@@ -3,9 +3,9 @@ package com.leaselens.datastructures;
 import com.leaselens.model.NearbyPlace;
 
 /**
- * This interface is for Priority Queue data structure
+ * Priority Queue ADT (Abstract Data Type)
  * Priority queue is like emergency room - most important one come out first
- * We use min heap so smallest distance come out first
+ * Smallest distance come out first
  */
 public interface PriorityQueueInterface {
 

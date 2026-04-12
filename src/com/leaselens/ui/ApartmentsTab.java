@@ -1506,7 +1506,7 @@ public class ApartmentsTab {
         // this runnable filters and displays places using Queue and PriorityQueue
         // step 1: put all places into PlaceFilterQueue (FIFO queue)
         // step 2: dequeue each place, check if it match the search and category
-        // step 3: matching places go into PlacePriorityQueue (min-heap by distance)
+        // step 3: matching places go into PlacePriorityQueue (sorted by distance)
         // step 4: removeMin from priority queue to display closest places first
         Runnable applyFilter = new Runnable() {
             public void run() {
@@ -1522,7 +1522,7 @@ public class ApartmentsTab {
 
                 // STEP 2: dequeue each place and check if it match the filter
                 // if it match, put it in the priority queue
-                PlacePriorityQueue priorityQueue = new PlacePriorityQueue(100);
+                PlacePriorityQueue priorityQueue = new PlacePriorityQueue();
                 int queueProcessed = 0;
 
                 while (!filterQueue.isEmpty()) {
