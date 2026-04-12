@@ -23,7 +23,7 @@ public class CrimeDataService {
     private String lastBreakdown;
 
     /**
-     * This method is getting crime data near a location
+     * This method is getting crime data near a location for last 30 days
      * It use a bounding box around the lat/lon (about 0.3 miles)
      * Then it count crimes by type and calculate a safety score
      * @param lat the latitude of the apartment
@@ -37,10 +37,15 @@ public class CrimeDataService {
         try {
             // build the SQL query for Boston crime data
             // we look at crimes within about 0.3 miles (0.005 degrees)
+            // only last 30 days so the score reflect current safety
             // the resource ID is for "Crime Incident Reports 2023 to Present"
+            java.time.LocalDate thirtyDaysAgo = java.time.LocalDate.now().minusDays(30);
+            String dateFilter = thirtyDaysAgo.toString();
+
             String sql = "SELECT \"OFFENSE_DESCRIPTION\", COUNT(*) as cnt "
                 + "FROM \"b973d8cb-eeb2-4e7e-99da-c92938efc9c0\" "
                 + "WHERE \"Lat\" IS NOT NULL "
+                + "AND \"OCCURRED_ON_DATE\" >= '" + dateFilter + "' "
                 + "AND CAST(\"Lat\" AS FLOAT) > " + (lat - 0.005) + " "
                 + "AND CAST(\"Lat\" AS FLOAT) < " + (lat + 0.005) + " "
                 + "AND CAST(\"Long\" AS FLOAT) > " + (lon - 0.005) + " "
@@ -88,7 +93,8 @@ public class CrimeDataService {
 
             // calculate safety score - fewer crimes means safer
             // more crimes = lower score, less crimes = higher score
-            double rawScore = 100.0 / (1.0 + (double) totalCrimes / 50.0);
+            // with 30 day window, typical area might have 5-50 crimes
+            double rawScore = 100.0 / (1.0 + (double) totalCrimes / 20.0);
             int safetyScore = (int) Math.round(rawScore);
 
             // save breakdown so caller can get it

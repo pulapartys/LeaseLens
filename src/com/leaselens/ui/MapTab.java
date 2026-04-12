@@ -1,54 +1,43 @@
 package com.leaselens.ui;
 
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.application.*;
+import javafx.geometry.*;
+import javafx.scene.canvas.*;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.*;
+import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
 import com.leaselens.service.ApartmentService;
 
 /**
- * This class is the Map View tab showing apartments on a real map
- * It use JavaFX Canvas to draw OpenStreetMap tile images
- * Each apartment is a colored circle on the map
+ * This is the Map View tab showing apartments on a real map
+ * It draw OpenStreetMap tiles on a Canvas
  *
- * pre-condition: service should not be null
+ * pre-condition: service not null
  * post-condition: map tab is created
  */
 public class MapTab {
 
     private ApartmentService service;
     private VBox content;
-    private Canvas tileCanvas;    // bottom canvas for map tiles
-    private Canvas markerCanvas;  // top canvas for apartment pins
+    private Canvas tileCanvas;
+    private Canvas markerCanvas;
     private Label infoLabel;
-
-    // map center coordinates (Boston default)
     private double centerLat = 42.3601;
     private double centerLon = -71.0589;
-
-    // zoom level and tile size (OpenStreetMap standard)
     private int zoom = 13;
     private int tileSize = 256;
 
     /**
-     * This constructor is making the map tab
-     * @param service the apartment service
+     * This make new MapTab with the service
+     * It set up everything for the map
+     * @param service the apartment service to use
      *
-     * pre-condition: service should not be null
-     * post-condition: tab is built with map canvas
+     * pre-condition: service is not null
+     * post-condition: map tab is ready to show
      */
     public MapTab(ApartmentService service) {
         this.service = service;
@@ -57,45 +46,41 @@ public class MapTab {
     }
 
     /**
-     * This method is building the map tab UI with canvas
+     * This build all the stuff inside the tab
+     * It make header and legend and map canvas and zoom button
      *
-     * pre-condition: none
-     * post-condition: map canvas and controls is created
+     * pre-condition: content is not null
+     * post-condition: all UI component is added to content
      */
     private void buildTab() {
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: #f0f2f5;");
 
-        // header row
-        HBox headerRow = new HBox(15);
-        headerRow.setAlignment(Pos.CENTER_LEFT);
-
+        // header
         Label header = new Label("Map View");
         header.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         header.setStyle("-fx-text-fill: #1a237e;");
         HBox.setHgrow(header, Priority.ALWAYS);
 
-        Button refreshButton = new Button("Refresh Map");
-        refreshButton.setFont(Font.font("Arial", 13));
-        refreshButton.setPadding(new Insets(8, 20, 8, 20));
-        refreshButton.setStyle(
-            "-fx-background-color: #1a237e; " +
-            "-fx-text-fill: white; " +
-            "-fx-background-radius: 5; " +
-            "-fx-cursor: hand;"
-        );
-        refreshButton.setOnAction(e -> refresh());
-        headerRow.getChildren().addAll(header, refreshButton);
+        Button refreshBtn = new Button("Refresh Map");
+        refreshBtn.setFont(Font.font("Arial", 13));
+        refreshBtn.setPadding(new Insets(8, 20, 8, 20));
+        refreshBtn.setStyle("-fx-background-color: #1a237e; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                refresh();
+            }
+        });
+
+        HBox headerRow = new HBox(15);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        headerRow.getChildren().addAll(header, refreshBtn);
 
         // legend
         HBox legend = new HBox(20);
         legend.setAlignment(Pos.CENTER_LEFT);
         legend.setPadding(new Insets(10, 15, 10, 15));
-        legend.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 8; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
+        legend.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);");
         legend.getChildren().addAll(
             makeLegendItem("New", "#2196f3"),
             makeLegendItem("Shortlisted", "#4caf50"),
@@ -103,289 +88,224 @@ public class MapTab {
             makeLegendItem("Rejected", "#f44336")
         );
 
-        // info label
         infoLabel = new Label("Click 'Refresh Map' to load apartment pins");
         infoLabel.setFont(Font.font("Arial", 13));
         infoLabel.setStyle("-fx-text-fill: #666;");
 
-        // map area - tile canvas at bottom, marker canvas on top
+        // map canvases
         StackPane mapPane = new StackPane();
-        mapPane.setStyle("-fx-background-color: #b8d4e8;"); // water color while loading
+        mapPane.setStyle("-fx-background-color: #b8d4e8;");
         VBox.setVgrow(mapPane, Priority.ALWAYS);
 
         tileCanvas = new Canvas();
         markerCanvas = new Canvas();
-
-        // make both canvases resize with the pane
         tileCanvas.widthProperty().bind(mapPane.widthProperty());
         tileCanvas.heightProperty().bind(mapPane.heightProperty());
         markerCanvas.widthProperty().bind(mapPane.widthProperty());
         markerCanvas.heightProperty().bind(mapPane.heightProperty());
-
-        // redraw when the canvas gets resized
-        tileCanvas.widthProperty().addListener(e -> drawTiles());
-        tileCanvas.heightProperty().addListener(e -> drawTiles());
-
-        // zoom in / zoom out buttons shown on top-left of map
-        VBox zoomButtons = new VBox(2);
-        zoomButtons.setAlignment(Pos.TOP_LEFT);
-        StackPane.setAlignment(zoomButtons, Pos.TOP_LEFT);
-        StackPane.setMargin(zoomButtons, new Insets(10));
-
-        Button zoomInBtn = new Button("+");
-        Button zoomOutBtn = new Button("-");
-
-        String zoomStyle =
-            "-fx-background-color: white; " +
-            "-fx-font-size: 18px; -fx-font-weight: bold; " +
-            "-fx-min-width: 36; -fx-min-height: 36; " +
-            "-fx-max-width: 36; -fx-max-height: 36; " +
-            "-fx-background-radius: 4; " +
-            "-fx-cursor: hand; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);";
-
-        zoomInBtn.setStyle(zoomStyle);
-        zoomOutBtn.setStyle(zoomStyle);
-
-        zoomInBtn.setOnAction(e -> {
-            if (zoom < 18) { zoom++; drawTiles(); }
+        tileCanvas.widthProperty().addListener(new javafx.beans.InvalidationListener() {
+            public void invalidated(javafx.beans.Observable obs) {
+                drawTiles();
+            }
         });
-        zoomOutBtn.setOnAction(e -> {
-            if (zoom > 5) { zoom--; drawTiles(); }
-        });
-
-        zoomButtons.getChildren().addAll(zoomInBtn, zoomOutBtn);
-
-        // scroll wheel zoom on the map
-        mapPane.setOnScroll(e -> {
-            if (e.getDeltaY() > 0) {
-                if (zoom < 18) { zoom++; drawTiles(); }
-            } else {
-                if (zoom > 5) { zoom--; drawTiles(); }
+        tileCanvas.heightProperty().addListener(new javafx.beans.InvalidationListener() {
+            public void invalidated(javafx.beans.Observable obs) {
+                drawTiles();
             }
         });
 
-        mapPane.getChildren().addAll(tileCanvas, markerCanvas, zoomButtons);
+        // zoom buttons
+        String zoomStyle = "-fx-background-color: white; -fx-font-size: 18px; -fx-font-weight: bold; "
+            + "-fx-min-width: 36; -fx-min-height: 36; -fx-max-width: 36; -fx-max-height: 36; "
+            + "-fx-background-radius: 4; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);";
+        Button zoomIn = new Button("+");
+        Button zoomOut = new Button("-");
+        zoomIn.setStyle(zoomStyle);
+        zoomOut.setStyle(zoomStyle);
+        zoomIn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                if (zoom < 18) {
+                    zoom++;
+                    drawTiles();
+                }
+            }
+        });
+        zoomOut.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                if (zoom > 5) {
+                    zoom--;
+                    drawTiles();
+                }
+            }
+        });
 
+        VBox zoomBox = new VBox(2);
+        zoomBox.setAlignment(Pos.TOP_LEFT);
+        StackPane.setAlignment(zoomBox, Pos.TOP_LEFT);
+        StackPane.setMargin(zoomBox, new Insets(10));
+        zoomBox.getChildren().addAll(zoomIn, zoomOut);
+
+        mapPane.setOnScroll(new javafx.event.EventHandler<javafx.scene.input.ScrollEvent>() {
+            public void handle(javafx.scene.input.ScrollEvent e) {
+                if (e.getDeltaY() > 0 && zoom < 18) { zoom++; drawTiles(); }
+                else if (e.getDeltaY() < 0 && zoom > 5) { zoom--; drawTiles(); }
+            }
+        });
+
+        mapPane.getChildren().addAll(tileCanvas, markerCanvas, zoomBox);
         content.getChildren().addAll(headerRow, legend, infoLabel, mapPane);
-
-        // draw the map when first loading
         drawTiles();
     }
 
     /**
-     * This method is making a legend item with a color dot
-     * @param text the label text
-     * @param color the dot color
-     * @return HBox legend item
+     * This make one item for the legend with color dot and text
+     * @param text the label text to show
+     * @param color the hex color string for the dot
+     * @return HBox with the dot and label inside
      *
-     * pre-condition: none
-     * post-condition: legend item is returned
+     * pre-condition: text and color is not null
+     * post-condition: return a HBox with colored dot and label
      */
     private HBox makeLegendItem(String text, String color) {
         HBox item = new HBox(6);
         item.setAlignment(Pos.CENTER_LEFT);
-
         Label dot = new Label("  ");
-        dot.setStyle(
-            "-fx-background-color: " + color + "; " +
-            "-fx-background-radius: 10; " +
-            "-fx-min-width: 14; -fx-min-height: 14; " +
-            "-fx-max-width: 14; -fx-max-height: 14;"
-        );
-
+        dot.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 10; "
+            + "-fx-min-width: 14; -fx-min-height: 14; -fx-max-width: 14; -fx-max-height: 14;");
         Label label = new Label(text);
         label.setFont(Font.font("Arial", 13));
-
         item.getChildren().addAll(dot, label);
         return item;
     }
 
     /**
-     * This method is drawing all the OpenStreetMap tiles on the tile canvas
-     * It calculate which tiles are needed and load them as JavaFX images
+     * This draw all the OpenStreetMap tiles on canvas
      *
      * pre-condition: none
-     * post-condition: map tiles is drawn on canvas
+     * post-condition: map tiles is drawn
      */
     private void drawTiles() {
-        double width = tileCanvas.getWidth();
-        double height = tileCanvas.getHeight();
-        if (width <= 0 || height <= 0) return;
+        double w = tileCanvas.getWidth();
+        double h = tileCanvas.getHeight();
+        if (w <= 0 || h <= 0) return;
 
         GraphicsContext tgc = tileCanvas.getGraphicsContext2D();
-        tgc.clearRect(0, 0, width, height);
-
-        // fill background with water color while tiles load
+        tgc.clearRect(0, 0, w, h);
         tgc.setFill(Color.web("#b8d4e8"));
-        tgc.fillRect(0, 0, width, height);
+        tgc.fillRect(0, 0, w, h);
 
-        // figure out which tile the center is on
-        double centerTileX = lonToTileDouble(centerLon);
-        double centerTileY = latToTileDouble(centerLat);
-
-        // top-left tile index
-        int startTileX = (int) Math.floor(centerTileX - width / 2.0 / tileSize);
-        int startTileY = (int) Math.floor(centerTileY - height / 2.0 / tileSize);
-
-        // pixel position of the top-left tile on screen
-        double startPixelX = (startTileX - centerTileX + width / 2.0 / tileSize) * tileSize;
-        double startPixelY = (startTileY - centerTileY + height / 2.0 / tileSize) * tileSize;
-
-        // how many tiles we need to cover the canvas
-        int tilesAcross = (int) Math.ceil(width / tileSize) + 2;
-        int tilesDown = (int) Math.ceil(height / tileSize) + 2;
-
+        double cTileX = lonToTile(centerLon);
+        double cTileY = latToTile(centerLat);
+        int startX = (int) Math.floor(cTileX - w / 2.0 / tileSize);
+        int startY = (int) Math.floor(cTileY - h / 2.0 / tileSize);
+        double startPxX = (startX - cTileX + w / 2.0 / tileSize) * tileSize;
+        double startPxY = (startY - cTileY + h / 2.0 / tileSize) * tileSize;
+        int across = (int) Math.ceil(w / tileSize) + 2;
+        int down = (int) Math.ceil(h / tileSize) + 2;
         int maxTile = (int) Math.pow(2, zoom);
 
-        for (int tx = 0; tx < tilesAcross; tx++) {
-            for (int ty = 0; ty < tilesDown; ty++) {
-                // wrap tile X around (the world repeats horizontally)
-                int tileX = ((startTileX + tx) % maxTile + maxTile) % maxTile;
-                int tileY = startTileY + ty;
-
-                // skip tiles outside valid range
+        for (int tx = 0; tx < across; tx++) {
+            for (int ty = 0; ty < down; ty++) {
+                int tileX = ((startX + tx) % maxTile + maxTile) % maxTile;
+                int tileY = startY + ty;
                 if (tileY < 0 || tileY >= maxTile) continue;
 
-                double pixelX = startPixelX + tx * tileSize;
-                double pixelY = startPixelY + ty * tileSize;
-
-                // load tile image from OpenStreetMap
+                double px = startPxX + tx * tileSize;
+                double py = startPxY + ty * tileSize;
                 String url = "https://tile.openstreetmap.org/" + zoom + "/" + tileX + "/" + tileY + ".png";
                 Image tile = new Image(url, tileSize, tileSize, false, false, true);
 
-                final double px = pixelX;
-                final double py = pixelY;
-
-                // when tile finishes loading, draw it
-                tile.progressProperty().addListener((obs, oldVal, newVal) -> {
-                    if (newVal.doubleValue() >= 1.0 && !tile.isError()) {
-                        Platform.runLater(() -> {
-                            tgc.drawImage(tile, px, py, tileSize, tileSize);
-                            drawMarkers(); // keep markers on top after each tile draws
-                        });
+                final double fpx = px;
+                final double fpy = py;
+                tile.progressProperty().addListener(new javafx.beans.value.ChangeListener<Number>() {
+                    public void changed(javafx.beans.value.ObservableValue<? extends Number> obs, Number ov, Number nv) {
+                        if (nv.doubleValue() >= 1.0 && !tile.isError()) {
+                            Platform.runLater(new Runnable() {
+                                public void run() {
+                                    tgc.drawImage(tile, fpx, fpy, tileSize, tileSize);
+                                    drawMarkers();
+                                }
+                            });
+                        }
                     }
                 });
-
-                // draw immediately if tile is already in memory
                 if (tile.getProgress() >= 1.0 && !tile.isError()) {
-                    tgc.drawImage(tile, pixelX, pixelY, tileSize, tileSize);
+                    tgc.drawImage(tile, px, py, tileSize, tileSize);
                 }
             }
         }
-
         drawMarkers();
     }
 
     /**
-     * This method is drawing colored circle markers for each apartment
-     * It use the marker canvas which is on top of the tile canvas
+     * This draw all apartment marker pins on the marker canvas
+     * It loop through all apartment and put colored circle on map
      *
-     * pre-condition: none
-     * post-condition: markers is drawn for all apartments that have coordinates
+     * pre-condition: markerCanvas is not null
+     * post-condition: all apartment with coordinates is drawn on map
      */
     private void drawMarkers() {
-        double width = markerCanvas.getWidth();
-        double height = markerCanvas.getHeight();
-        if (width <= 0 || height <= 0) return;
+        double w = markerCanvas.getWidth();
+        double h = markerCanvas.getHeight();
+        if (w <= 0 || h <= 0) return;
 
         GraphicsContext mgc = markerCanvas.getGraphicsContext2D();
-        mgc.clearRect(0, 0, width, height);
+        mgc.clearRect(0, 0, w, h);
 
         int count = 0;
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
-            double lat = apt.getLatitude();
-            double lon = apt.getLongitude();
+            if (apt.getLatitude() == 0 && apt.getLongitude() == 0) continue;
 
-            // skip apartments with no location data
-            if (lat == 0 && lon == 0) continue;
-
-            double x = lonToPixelX(lon, width);
-            double y = latToPixelY(lat, height);
-
+            double x = w / 2.0 + (lonToTile(apt.getLongitude()) - lonToTile(centerLon)) * tileSize;
+            double y = h / 2.0 + (latToTile(apt.getLatitude()) - latToTile(centerLat)) * tileSize;
             Color color = getMarkerColor(apt.getStatus());
 
-            // draw filled circle
             mgc.setFill(color);
             mgc.fillOval(x - 9, y - 9, 18, 18);
-
-            // draw white border around circle
             mgc.setStroke(Color.WHITE);
             mgc.setLineWidth(2.5);
             mgc.strokeOval(x - 9, y - 9, 18, 18);
-
-            // draw apartment name next to the marker
             mgc.setFill(Color.web("#111111"));
             mgc.setFont(Font.font("Arial", FontWeight.BOLD, 11));
             mgc.fillText(apt.getName(), x + 12, y + 4);
-
             count++;
         }
-
-        // update status label
-        final int finalCount = count;
-        infoLabel.setText(finalCount + " apartment(s) shown on map. Apartments without coordinates are not shown.");
+        infoLabel.setText(count + " apartment(s) shown on map. Apartments without coordinates are not shown.");
     }
 
     /**
-     * This method converts longitude to tile X coordinate (as decimal)
+     * This convert longitude to tile x coordinate
      * @param lon the longitude value
-     * @return tile X position as decimal
+     * @return the tile x position as double
      *
-     * pre-condition: none
-     * post-condition: tile X is returned
+     * pre-condition: lon is valid longitude number
+     * post-condition: return correct tile x for the zoom level
      */
-    private double lonToTileDouble(double lon) {
+    private double lonToTile(double lon) {
         return (lon + 180.0) / 360.0 * Math.pow(2, zoom);
     }
 
     /**
-     * This method converts latitude to tile Y coordinate (as decimal)
+     * This convert latitude to tile y coordinate
      * @param lat the latitude value
-     * @return tile Y position as decimal
+     * @return the tile y position as double
      *
-     * pre-condition: none
-     * post-condition: tile Y is returned
+     * pre-condition: lat is valid latitude number
+     * post-condition: return correct tile y for the zoom level
      */
-    private double latToTileDouble(double lat) {
-        double latRad = Math.toRadians(lat);
-        return (1.0 - Math.log(Math.tan(latRad) + 1.0 / Math.cos(latRad)) / Math.PI) / 2.0 * Math.pow(2, zoom);
+    private double latToTile(double lat) {
+        double r = Math.toRadians(lat);
+        return (1.0 - Math.log(Math.tan(r) + 1.0 / Math.cos(r)) / Math.PI) / 2.0 * Math.pow(2, zoom);
     }
 
     /**
-     * This method converts longitude to pixel X position on canvas
-     * @param lon the longitude
-     * @param canvasWidth the canvas width
-     * @return pixel X position
-     *
-     * pre-condition: none
-     * post-condition: pixel X is returned
-     */
-    private double lonToPixelX(double lon, double canvasWidth) {
-        return canvasWidth / 2.0 + (lonToTileDouble(lon) - lonToTileDouble(centerLon)) * tileSize;
-    }
-
-    /**
-     * This method converts latitude to pixel Y position on canvas
-     * @param lat the latitude
-     * @param canvasHeight the canvas height
-     * @return pixel Y position
-     *
-     * pre-condition: none
-     * post-condition: pixel Y is returned
-     */
-    private double latToPixelY(double lat, double canvasHeight) {
-        return canvasHeight / 2.0 + (latToTileDouble(lat) - latToTileDouble(centerLat)) * tileSize;
-    }
-
-    /**
-     * This method is giving the color for a marker based on apartment status
+     * This get the color for a apartment marker based on status
      * @param status the apartment status
-     * @return Color for the marker
+     * @return the Color to use for the marker
      *
-     * pre-condition: status should not be null
-     * post-condition: color is returned
+     * pre-condition: status is not null
+     * post-condition: return correct color for the status
      */
     private Color getMarkerColor(Status status) {
         if (status == Status.NEW) return Color.web("#2196f3");
@@ -395,20 +315,12 @@ public class MapTab {
     }
 
     /**
-     * This method is refreshing the map with latest apartment data
-     * It also re-center the map on the apartments if any have coordinates
+     * This center the map on a specific location
+     * @param lat latitude
+     * @param lon longitude
      *
-     * pre-condition: none
-     * post-condition: map is redrawn with current apartment pins
-     */
-    /**
-     * This method is centering the map on a specific apartment location
-     * It is called when user click "View on Map" from the apartments tab
-     * @param lat the latitude to center on
-     * @param lon the longitude to center on
-     *
-     * pre-condition: lat and lon should be valid coordinates
-     * post-condition: map is redrawn centered on the given location
+     * pre-condition: valid coordinates
+     * post-condition: map is redrawn centered there
      */
     public void centerOn(double lat, double lon) {
         centerLat = lat;
@@ -417,8 +329,14 @@ public class MapTab {
         drawTiles();
     }
 
+    /**
+     * This refresh the map and recenter on average of all apartment
+     * It calculate the middle point of all apartment with coordinates
+     *
+     * pre-condition: service is not null
+     * post-condition: map is redrawn centered on apartments
+     */
     public void refresh() {
-        // center on average position of all apartments with coordinates
         int count = 0;
         double sumLat = 0;
         double sumLon = 0;
@@ -434,10 +352,16 @@ public class MapTab {
             centerLat = sumLat / count;
             centerLon = sumLon / count;
         }
-
         drawTiles();
     }
 
+    /**
+     * This return the content VBox so other class can use it
+     * @return the VBox that hold everything in this tab
+     *
+     * pre-condition: content is not null
+     * post-condition: return the content VBox
+     */
     public VBox getContent() {
         return content;
     }

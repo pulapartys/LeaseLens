@@ -1,502 +1,413 @@
 package com.leaselens.ui;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.geometry.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.service.ApartmentService;
 
 /**
- * This class is the Compare tab where user can pick 2 or 3 apartments
- * and see them side by side with green and red colors showing best and worst
+ * This is the Compare tab where user pick 2 or 3 apartments
+ * and see them side by side with green and red colors
  *
- * pre-condition: service should not be null
+ * pre-condition: service not null
  * post-condition: compare tab is created
  */
 public class CompareTab {
 
     private ApartmentService service;
     private VBox content;
-
-    private ComboBox<String> apartment1Combo;
-    private ComboBox<String> apartment2Combo;
-    private ComboBox<String> apartment3Combo;
+    private ComboBox<String> combo1;
+    private ComboBox<String> combo2;
+    private ComboBox<String> combo3;
     private VBox resultsBox;
 
     /**
-     * This constructor is making the compare tab
+     * This make the compare tab
      * @param service the apartment service
      *
-     * pre-condition: service should not be null
-     * post-condition: tab is built
+     * pre-condition: service not null
+     * post-condition: compare tab is built
      */
     public CompareTab(ApartmentService service) {
         this.service = service;
-        this.content = new VBox(20);
+        this.content = new VBox(15);
         buildTab();
     }
 
     /**
-     * This method is building the compare tab UI
+     * This build the compare tab layout
      *
-     * pre-condition: none
-     * post-condition: all parts is created
+     * pre-condition: content not null
+     * post-condition: tab is built with combos and results area
      */
     private void buildTab() {
-        content.setPadding(new Insets(25));
+        content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: #f0f2f5;");
 
-        // header
         Label header = new Label("Compare Apartments");
-        header.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         header.setStyle("-fx-text-fill: #1a237e;");
 
-        Label subtitle = new Label("Select 2 or 3 apartments to compare side by side");
-        subtitle.setFont(Font.font("Arial", 14));
-        subtitle.setStyle("-fx-text-fill: #666;");
+        combo1 = new ComboBox<String>();
+        combo1.setPromptText("Pick first apartment...");
+        combo2 = new ComboBox<String>();
+        combo2.setPromptText("Pick second apartment...");
+        combo3 = new ComboBox<String>();
+        combo3.setPromptText("Optional third...");
 
-        // selection row
-        HBox selectRow = new HBox(15);
+        Button compareBtn = new Button("Compare");
+        compareBtn.setStyle("-fx-background-color: #3366cc; -fx-text-fill: white;");
+        compareBtn.setOnAction(e -> doCompare());
+
+        HBox selectRow = new HBox(10);
+        selectRow.setPadding(new Insets(10));
         selectRow.setAlignment(Pos.CENTER_LEFT);
-        selectRow.setPadding(new Insets(15));
-        selectRow.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 8; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
+        selectRow.setStyle("-fx-background-color: white; -fx-background-radius: 5;");
+        selectRow.getChildren().addAll(
+            new Label("Apt 1:"), combo1,
+            new Label("Apt 2:"), combo2,
+            new Label("Apt 3 (optional):"), combo3, compareBtn);
 
-        Label apt1Label = new Label("Apartment 1:");
-        apt1Label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        apartment1Combo = new ComboBox<String>();
-        apartment1Combo.setMinWidth(200);
+        Label hint = new Label("Pick at least 2 apartments from the dropdowns above, then click Compare. Green = best value, Red = worst.");
+        hint.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
+        hint.setWrapText(true);
 
-        Label apt2Label = new Label("Apartment 2:");
-        apt2Label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        apartment2Combo = new ComboBox<String>();
-        apartment2Combo.setMinWidth(200);
+        resultsBox = new VBox(10);
+        resultsBox.setPadding(new Insets(10));
+        resultsBox.getChildren().add(hint);
 
-        Label apt3Label = new Label("Apartment 3 (optional):");
-        apt3Label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        apartment3Combo = new ComboBox<String>();
-        apartment3Combo.setMinWidth(200);
+        ScrollPane scroll = new ScrollPane(resultsBox);
+        scroll.setFitToWidth(true);
+        VBox.setVgrow(scroll, Priority.ALWAYS);
 
-        Button compareButton = new Button("Compare");
-        compareButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        compareButton.setPadding(new Insets(10, 25, 10, 25));
-        compareButton.setStyle(
-            "-fx-background-color: #1a237e; " +
-            "-fx-text-fill: white; " +
-            "-fx-background-radius: 6; " +
-            "-fx-cursor: hand;"
-        );
-
-        selectRow.getChildren().addAll(apt1Label, apartment1Combo, apt2Label, apartment2Combo,
-                                        apt3Label, apartment3Combo, compareButton);
-
-        // results area
-        resultsBox = new VBox(0);
-        VBox.setVgrow(resultsBox, Priority.ALWAYS);
-
-        // placeholder message
-        Label placeholderLabel = new Label("Select apartments above and click Compare to see results");
-        placeholderLabel.setFont(Font.font("Arial", 15));
-        placeholderLabel.setStyle("-fx-text-fill: #999;");
-        placeholderLabel.setPadding(new Insets(50));
-        resultsBox.getChildren().add(placeholderLabel);
-        resultsBox.setAlignment(Pos.CENTER);
-
-        // compare button action
-        compareButton.setOnAction(e -> doCompare());
-
-        ScrollPane scrollPane = new ScrollPane(resultsBox);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: #f0f2f5;");
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-        content.getChildren().addAll(header, subtitle, selectRow, scrollPane);
-
+        content.getChildren().addAll(header, selectRow, scroll);
         refresh();
     }
 
     /**
-     * This method is doing the comparison and showing results
+     * This do the comparison between selected apartments
+     * It build a grid with green for best and red for worst
      *
-     * pre-condition: at least 2 apartments should be selected
-     * post-condition: comparison table is shown
+     * pre-condition: at least 2 apartments selected
+     * post-condition: results grid is shown
      */
     private void doCompare() {
         resultsBox.getChildren().clear();
-        resultsBox.setAlignment(Pos.TOP_LEFT);
 
-        String name1 = apartment1Combo.getValue();
-        String name2 = apartment2Combo.getValue();
-        String name3 = apartment3Combo.getValue();
+        String n1 = combo1.getValue();
+        String n2 = combo2.getValue();
+        String n3 = combo3.getValue();
 
-        if (name1 == null || name2 == null) {
-            Label errorLabel = new Label("Please select at least 2 apartments to compare.");
-            errorLabel.setFont(Font.font("Arial", 14));
-            errorLabel.setStyle("-fx-text-fill: #c62828;");
-            resultsBox.getChildren().add(errorLabel);
+        if (n1 == null || n2 == null) {
+            resultsBox.getChildren().add(new Label("Please select at least 2 apartments."));
             return;
         }
 
-        // find the apartments by searching
-        Apartment apt1 = findByName(name1);
-        Apartment apt2 = findByName(name2);
-        Apartment apt3 = null;
-        if (name3 != null && !name3.equals("None")) {
-            apt3 = findByName(name3);
+        Apartment a1 = findByName(n1);
+        Apartment a2 = findByName(n2);
+        Apartment a3 = null;
+        if (n3 != null && !n3.equals("None")) {
+            a3 = findByName(n3);
         }
-
-        if (apt1 == null || apt2 == null) {
-            Label errorLabel = new Label("Could not find selected apartments.");
-            errorLabel.setFont(Font.font("Arial", 14));
-            errorLabel.setStyle("-fx-text-fill: #c62828;");
-            resultsBox.getChildren().add(errorLabel);
+        if (a1 == null || a2 == null) {
+            resultsBox.getChildren().add(new Label("Could not find selected apartments."));
             return;
         }
 
-        // build comparison grid
+        // put apartments in array so we can loop
+        Apartment[] apts;
+        if (a3 != null) {
+            apts = new Apartment[]{a1, a2, a3};
+        } else {
+            apts = new Apartment[]{a1, a2};
+        }
+
         GridPane grid = new GridPane();
-        grid.setHgap(0);
-        grid.setVgap(0);
-        grid.setPadding(new Insets(15));
-        grid.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 8; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);"
-        );
-
-        int colCount = apt3 != null ? 4 : 3;
+        grid.setPadding(new Insets(10));
+        grid.setStyle("-fx-background-color: white;");
 
         // header row
-        addGridCell(grid, "Feature", 0, 0, true, "#f5f5f5", "#333");
-        addGridCell(grid, apt1.getName(), 1, 0, true, "#e3f2fd", "#1565c0");
-        addGridCell(grid, apt2.getName(), 2, 0, true, "#e8f5e9", "#2e7d32");
-        if (apt3 != null) {
-            addGridCell(grid, apt3.getName(), 3, 0, true, "#fff3e0", "#e65100");
+        addCell(grid, "Feature", 0, 0, true, "#f5f5f5", "#333");
+        for (int i = 0; i < apts.length; i++) {
+            addCell(grid, apts[i].getName(), i + 1, 0, true, "#f5f5f5", "#333");
         }
 
-        // data rows
         int row = 1;
+        int[] wins = {0, 0, 0};
 
-        // rent
-        double[] rents = apt3 != null ?
-            new double[]{apt1.getRent(), apt2.getRent(), apt3.getRent()} :
-            new double[]{apt1.getRent(), apt2.getRent()};
-        int bestRent = findMinIndex(rents);
-        int worstRent = findMaxIndex(rents);
-
-        addGridCell(grid, "Rent", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, "$" + String.format("%.0f", apt1.getRent()), 1, row, 0, bestRent, worstRent);
-        addCompareCell(grid, "$" + String.format("%.0f", apt2.getRent()), 2, row, 1, bestRent, worstRent);
-        if (apt3 != null) addCompareCell(grid, "$" + String.format("%.0f", apt3.getRent()), 3, row, 2, bestRent, worstRent);
-        row++;
-
-        // sqft (higher is better)
-        double[] sqfts = apt3 != null ?
-            new double[]{apt1.getSqft(), apt2.getSqft(), apt3.getSqft()} :
-            new double[]{apt1.getSqft(), apt2.getSqft()};
-        int bestSqft = findMaxIndex(sqfts);
-        int worstSqft = findMinIndex(sqfts);
-
-        addGridCell(grid, "Sqft", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, String.valueOf(apt1.getSqft()), 1, row, 0, bestSqft, worstSqft);
-        addCompareCell(grid, String.valueOf(apt2.getSqft()), 2, row, 1, bestSqft, worstSqft);
-        if (apt3 != null) addCompareCell(grid, String.valueOf(apt3.getSqft()), 3, row, 2, bestSqft, worstSqft);
-        row++;
-
-        // rent per sqft (lower is better)
-        double rps1 = apt1.getSqft() > 0 ? apt1.getRent() / apt1.getSqft() : 0;
-        double rps2 = apt2.getSqft() > 0 ? apt2.getRent() / apt2.getSqft() : 0;
-        double rps3 = apt3 != null && apt3.getSqft() > 0 ? apt3.getRent() / apt3.getSqft() : 0;
-        double[] rps = apt3 != null ? new double[]{rps1, rps2, rps3} : new double[]{rps1, rps2};
-        int bestRps = findMinIndex(rps);
-        int worstRps = findMaxIndex(rps);
-
-        addGridCell(grid, "Rent/Sqft", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, "$" + String.format("%.2f", rps1), 1, row, 0, bestRps, worstRps);
-        addCompareCell(grid, "$" + String.format("%.2f", rps2), 2, row, 1, bestRps, worstRps);
-        if (apt3 != null) addCompareCell(grid, "$" + String.format("%.2f", rps3), 3, row, 2, bestRps, worstRps);
-        row++;
-
-        // bedrooms (higher is better)
-        double[] beds = apt3 != null ?
-            new double[]{apt1.getBedrooms(), apt2.getBedrooms(), apt3.getBedrooms()} :
-            new double[]{apt1.getBedrooms(), apt2.getBedrooms()};
-        int bestBeds = findMaxIndex(beds);
-        int worstBeds = findMinIndex(beds);
-
-        addGridCell(grid, "Bedrooms", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, String.valueOf(apt1.getBedrooms()), 1, row, 0, bestBeds, worstBeds);
-        addCompareCell(grid, String.valueOf(apt2.getBedrooms()), 2, row, 1, bestBeds, worstBeds);
-        if (apt3 != null) addCompareCell(grid, String.valueOf(apt3.getBedrooms()), 3, row, 2, bestBeds, worstBeds);
-        row++;
-
-        // walk score (higher is better)
-        double[] walks = apt3 != null ?
-            new double[]{apt1.getWalkScore(), apt2.getWalkScore(), apt3.getWalkScore()} :
-            new double[]{apt1.getWalkScore(), apt2.getWalkScore()};
-        int bestWalk = findMaxIndex(walks);
-        int worstWalk = findMinIndex(walks);
-
-        addGridCell(grid, "Walk Score", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, formatScore(apt1.getWalkScore()), 1, row, 0, bestWalk, worstWalk);
-        addCompareCell(grid, formatScore(apt2.getWalkScore()), 2, row, 1, bestWalk, worstWalk);
-        if (apt3 != null) addCompareCell(grid, formatScore(apt3.getWalkScore()), 3, row, 2, bestWalk, worstWalk);
-        row++;
-
-        // distance to T (lower is better)
-        double[] dists = apt3 != null ?
-            new double[]{apt1.getDistanceToT(), apt2.getDistanceToT(), apt3.getDistanceToT()} :
-            new double[]{apt1.getDistanceToT(), apt2.getDistanceToT()};
-        int bestDist = findMinIndex(dists);
-        int worstDist = findMaxIndex(dists);
-
-        addGridCell(grid, "Distance to T", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, formatDist(apt1.getDistanceToT()), 1, row, 0, bestDist, worstDist);
-        addCompareCell(grid, formatDist(apt2.getDistanceToT()), 2, row, 1, bestDist, worstDist);
-        if (apt3 != null) addCompareCell(grid, formatDist(apt3.getDistanceToT()), 3, row, 2, bestDist, worstDist);
-        row++;
-
-        // safety score (higher is better)
-        double[] safeties = apt3 != null ?
-            new double[]{apt1.getSafetyScore(), apt2.getSafetyScore(), apt3.getSafetyScore()} :
-            new double[]{apt1.getSafetyScore(), apt2.getSafetyScore()};
-        int bestSafety = findMaxIndex(safeties);
-        int worstSafety = findMinIndex(safeties);
-
-        addGridCell(grid, "Safety Score", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, formatScore(apt1.getSafetyScore()), 1, row, 0, bestSafety, worstSafety);
-        addCompareCell(grid, formatScore(apt2.getSafetyScore()), 2, row, 1, bestSafety, worstSafety);
-        if (apt3 != null) addCompareCell(grid, formatScore(apt3.getSafetyScore()), 3, row, 2, bestSafety, worstSafety);
-        row++;
-
-        // recreation areas (higher is better)
-        double[] recs = apt3 != null ?
-            new double[]{apt1.getRecreationCount(), apt2.getRecreationCount(), apt3.getRecreationCount()} :
-            new double[]{apt1.getRecreationCount(), apt2.getRecreationCount()};
-        int bestRec = findMaxIndex(recs);
-        int worstRec = findMinIndex(recs);
-
-        addGridCell(grid, "Recreation Areas", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, formatScore(apt1.getRecreationCount()), 1, row, 0, bestRec, worstRec);
-        addCompareCell(grid, formatScore(apt2.getRecreationCount()), 2, row, 1, bestRec, worstRec);
-        if (apt3 != null) addCompareCell(grid, formatScore(apt3.getRecreationCount()), 3, row, 2, bestRec, worstRec);
-        row++;
+        // rent (lower better)
+        row = addRow(grid, row, "Rent", apts, wins, true, "rent");
+        // sqft (higher better)
+        row = addRow(grid, row, "Sqft", apts, wins, false, "sqft");
+        // rent per sqft (lower better)
+        row = addRow(grid, row, "Rent/Sqft", apts, wins, true, "rps");
+        // bedrooms (higher better)
+        row = addRow(grid, row, "Bedrooms", apts, wins, false, "beds");
+        // walk score (higher better)
+        row = addRow(grid, row, "Walk Score", apts, wins, false, "walk");
+        // distance to T (lower better)
+        row = addRow(grid, row, "Distance to T", apts, wins, true, "dist");
+        // safety (higher better)
+        row = addRow(grid, row, "Safety Score", apts, wins, false, "safety");
+        // recreation (higher better)
+        row = addRow(grid, row, "Recreation", apts, wins, false, "rec");
 
         // nearest T stop (no color)
-        addGridCell(grid, "Nearest T", 0, row, true, "#f5f5f5", "#333");
-        addGridCell(grid, apt1.getNearestTStop().isEmpty() ? "N/A" : apt1.getNearestTStop(), 1, row, false, "white", "#333");
-        addGridCell(grid, apt2.getNearestTStop().isEmpty() ? "N/A" : apt2.getNearestTStop(), 2, row, false, "white", "#333");
-        if (apt3 != null) addGridCell(grid, apt3.getNearestTStop().isEmpty() ? "N/A" : apt3.getNearestTStop(), 3, row, false, "white", "#333");
+        addCell(grid, "Nearest T", 0, row, true, "#f5f5f5", "#333");
+        for (int i = 0; i < apts.length; i++) {
+            String stop = apts[i].getNearestTStop();
+            if (stop.isEmpty()) stop = "N/A";
+            addCell(grid, stop, i + 1, row, false, "white", "#333");
+        }
         row++;
 
-        // amenities count (higher is better)
-        double[] amenities = apt3 != null ?
-            new double[]{apt1.countAmenities(), apt2.countAmenities(), apt3.countAmenities()} :
-            new double[]{apt1.countAmenities(), apt2.countAmenities()};
-        int bestAm = findMaxIndex(amenities);
-        int worstAm = findMinIndex(amenities);
-
-        addGridCell(grid, "Amenities", 0, row, true, "#f5f5f5", "#333");
-        addCompareCell(grid, apt1.countAmenities() + " / 6", 1, row, 0, bestAm, worstAm);
-        addCompareCell(grid, apt2.countAmenities() + " / 6", 2, row, 1, bestAm, worstAm);
-        if (apt3 != null) addCompareCell(grid, apt3.countAmenities() + " / 6", 3, row, 2, bestAm, worstAm);
-        row++;
+        // amenities (higher better)
+        row = addRow(grid, row, "Amenities", apts, wins, false, "amen");
 
         // parking (no color)
-        addGridCell(grid, "Parking", 0, row, true, "#f5f5f5", "#333");
-        addGridCell(grid, apt1.getHasParking() ? "Yes" : "No", 1, row, false, "white", "#333");
-        addGridCell(grid, apt2.getHasParking() ? "Yes" : "No", 2, row, false, "white", "#333");
-        if (apt3 != null) addGridCell(grid, apt3.getHasParking() ? "Yes" : "No", 3, row, false, "white", "#333");
+        addCell(grid, "Parking", 0, row, true, "#f5f5f5", "#333");
+        for (int i = 0; i < apts.length; i++) {
+            String parkText = "No";
+            if (apts[i].getHasParking()) parkText = "Yes";
+            addCell(grid, parkText, i + 1, row, false, "white", "#333");
+        }
         row++;
 
-        // status
-        addGridCell(grid, "Status", 0, row, true, "#f5f5f5", "#333");
-        addGridCell(grid, apt1.getStatus().toString(), 1, row, false, "white", "#333");
-        addGridCell(grid, apt2.getStatus().toString(), 2, row, false, "white", "#333");
-        if (apt3 != null) addGridCell(grid, apt3.getStatus().toString(), 3, row, false, "white", "#333");
-        row++;
-
-        // winner summary
-        int wins1 = 0, wins2 = 0, wins3 = 0;
-        // count who won the most categories from bestRent, bestSqft, bestRps, bestBeds, bestWalk, bestDist, bestAm
-        int[] bests = {bestRent, bestSqft, bestRps, bestBeds, bestWalk, bestDist, bestSafety, bestRec, bestAm};
-        for (int b : bests) {
-            if (b == 0) wins1++;
-            if (b == 1) wins2++;
-            if (b == 2) wins3++;
+        // status (no color)
+        addCell(grid, "Status", 0, row, true, "#f5f5f5", "#333");
+        for (int i = 0; i < apts.length; i++) {
+            addCell(grid, apts[i].getStatus().toString(), i + 1, row, false, "white", "#333");
         }
 
-        String winner = "";
-        if (wins1 >= wins2 && wins1 >= wins3) winner = apt1.getName();
-        else if (wins2 >= wins1 && wins2 >= wins3) winner = apt2.getName();
-        else if (apt3 != null) winner = apt3.getName();
+        // find winner
+        int bestIdx = 0;
+        for (int i = 1; i < apts.length; i++) {
+            if (wins[i] >= wins[bestIdx]) bestIdx = i;
+        }
+        String winText = "Winner: " + apts[bestIdx].getName() + "  (";
+        for (int i = 0; i < apts.length; i++) {
+            if (i > 0) winText = winText + ", ";
+            winText = winText + apts[i].getName() + ": " + wins[i] + " wins";
+        }
+        winText = winText + ")";
+        Label winLabel = new Label(winText);
+        winLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        winLabel.setPadding(new Insets(10));
+        winLabel.setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32; -fx-background-radius: 5;");
 
-        Label winnerLabel = new Label("Winner: " + winner + "  (" +
-            apt1.getName() + ": " + wins1 + " wins, " +
-            apt2.getName() + ": " + wins2 + " wins" +
-            (apt3 != null ? ", " + apt3.getName() + ": " + wins3 + " wins" : "") + ")");
-        winnerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        winnerLabel.setStyle("-fx-text-fill: #1a237e;");
-        winnerLabel.setPadding(new Insets(15, 0, 0, 0));
-
-        resultsBox.getChildren().addAll(grid, winnerLabel);
+        resultsBox.getChildren().addAll(grid, winLabel);
     }
 
     /**
-     * This method is adding a cell to the comparison grid
-     * @param grid the grid pane
+     * This add one comparison row and get value from apartment
+     * It figure out which apartment is best and worst for this field
+     * @param grid the grid to add to
+     * @param row the current row number
+     * @param label the row label
+     * @param apts the apartments array
+     * @param wins the win counter array
+     * @param lowerBetter true if lower value is better
+     * @param field which field to compare
+     * @return the next row number
+     *
+     * pre-condition: grid and apts not null
+     * post-condition: row is added with green and red colors
+     */
+    private int addRow(GridPane grid, int row, String label, Apartment[] apts,
+            int[] wins, boolean lowerBetter, String field) {
+
+        double[] vals = new double[apts.length];
+        String[] texts = new String[apts.length];
+
+        for (int i = 0; i < apts.length; i++) {
+            if (field.equals("rent")) {
+                vals[i] = apts[i].getRent();
+                texts[i] = "$" + String.format("%.0f", apts[i].getRent());
+            } else if (field.equals("sqft")) {
+                vals[i] = apts[i].getSqft();
+                texts[i] = String.valueOf((int) apts[i].getSqft());
+            } else if (field.equals("rps")) {
+                if (apts[i].getSqft() > 0) {
+                    vals[i] = apts[i].getRent() / apts[i].getSqft();
+                } else {
+                    vals[i] = 0;
+                }
+                texts[i] = "$" + String.format("%.2f", vals[i]);
+            } else if (field.equals("beds")) {
+                vals[i] = apts[i].getBedrooms();
+                texts[i] = String.valueOf(apts[i].getBedrooms());
+            } else if (field.equals("walk")) {
+                vals[i] = apts[i].getWalkScore();
+                texts[i] = fmtScore(apts[i].getWalkScore());
+            } else if (field.equals("dist")) {
+                vals[i] = apts[i].getDistanceToT();
+                texts[i] = fmtDist(apts[i].getDistanceToT());
+            } else if (field.equals("safety")) {
+                vals[i] = apts[i].getSafetyScore();
+                texts[i] = fmtScore(apts[i].getSafetyScore());
+            } else if (field.equals("rec")) {
+                vals[i] = apts[i].getRecreationCount();
+                texts[i] = fmtScore(apts[i].getRecreationCount());
+            } else if (field.equals("amen")) {
+                vals[i] = apts[i].countAmenities();
+                texts[i] = apts[i].countAmenities() + " / 6";
+            }
+        }
+
+        // find best and worst
+        int bestIdx;
+        int worstIdx;
+        if (lowerBetter) {
+            bestIdx = findMinIdx(vals);
+            worstIdx = findMaxIdx(vals);
+        } else {
+            bestIdx = findMaxIdx(vals);
+            worstIdx = findMinIdx(vals);
+        }
+        wins[bestIdx] = wins[bestIdx] + 1;
+
+        addCell(grid, label, 0, row, true, "#f5f5f5", "#333");
+        for (int i = 0; i < texts.length; i++) {
+            String bg = "white";
+            String fg = "#333";
+            if (i == bestIdx) { bg = "#e8f5e9"; fg = "#2e7d32"; }
+            else if (i == worstIdx) { bg = "#ffebee"; fg = "#c62828"; }
+            addCell(grid, texts[i], i + 1, row, false, bg, fg);
+        }
+        return row + 1;
+    }
+
+    /**
+     * This add one cell to the grid
+     * @param grid the grid
      * @param text the text to show
      * @param col column number
      * @param row row number
      * @param bold if text should be bold
-     * @param bgColor background color
-     * @param textColor text color
+     * @param bg background color
+     * @param fg text color
      *
-     * pre-condition: grid should not be null
-     * post-condition: cell is added to grid
+     * pre-condition: grid not null
+     * post-condition: cell is added
      */
-    private void addGridCell(GridPane grid, String text, int col, int row, boolean bold, String bgColor, String textColor) {
-        Label label = new Label(text);
-        label.setFont(Font.font("Arial", bold ? FontWeight.BOLD : FontWeight.NORMAL, 14));
-        label.setPadding(new Insets(12, 20, 12, 20));
-        label.setMinWidth(160);
-        label.setMaxWidth(Double.MAX_VALUE);
-        label.setStyle(
-            "-fx-background-color: " + bgColor + "; " +
-            "-fx-text-fill: " + textColor + "; " +
-            "-fx-border-color: #eee; " +
-            "-fx-border-width: 0 0 1 0;"
-        );
-        grid.add(label, col, row);
+    private void addCell(GridPane grid, String text, int col, int row,
+            boolean bold, String bg, String fg) {
+        Label l = new Label(text);
+        FontWeight weight = FontWeight.NORMAL;
+        if (bold) weight = FontWeight.BOLD;
+        l.setFont(Font.font("Arial", weight, 13));
+        l.setPadding(new Insets(8, 15, 8, 15));
+        l.setMinWidth(130);
+        l.setMaxWidth(Double.MAX_VALUE);
+        l.setStyle("-fx-background-color: " + bg + "; -fx-text-fill: " + fg
+            + "; -fx-border-color: #eee; -fx-border-width: 0 0 1 0;");
+        grid.add(l, col, row);
     }
 
     /**
-     * This method is adding a colored comparison cell (green=best, red=worst)
-     * @param grid the grid
-     * @param text the value text
-     * @param col column
-     * @param row row
-     * @param myIndex which apartment this is (0, 1, or 2)
-     * @param bestIndex which index is best
-     * @param worstIndex which index is worst
+     * This find the index of smallest value in array
+     * @param v the array of values
+     * @return index of minimum
      *
-     * pre-condition: grid should not be null
-     * post-condition: colored cell is added
+     * pre-condition: v not empty
+     * post-condition: return index of min value
      */
-    private void addCompareCell(GridPane grid, String text, int col, int row, int myIndex, int bestIndex, int worstIndex) {
-        String bgColor = "white";
-        String textColor = "#333";
-
-        if (myIndex == bestIndex) {
-            bgColor = "#e8f5e9";
-            textColor = "#2e7d32";
-        } else if (myIndex == worstIndex) {
-            bgColor = "#ffebee";
-            textColor = "#c62828";
+    private int findMinIdx(double[] v) {
+        int idx = 0;
+        for (int i = 1; i < v.length; i++) {
+            if (v[i] >= 0 && (v[i] < v[idx] || v[idx] < 0)) idx = i;
         }
-
-        addGridCell(grid, text, col, row, false, bgColor, textColor);
+        return idx;
     }
 
     /**
-     * This method find the index of minimum value in array
-     * @param values the array of doubles
-     * @return index of the smallest value
+     * This find the index of biggest value in array
+     * @param v the array of values
+     * @return index of maximum
      *
-     * pre-condition: array should not be empty
-     * post-condition: index is returned
+     * pre-condition: v not empty
+     * post-condition: return index of max value
      */
-    private int findMinIndex(double[] values) {
-        int minIdx = 0;
-        for (int i = 1; i < values.length; i++) {
-            if (values[i] >= 0 && (values[i] < values[minIdx] || values[minIdx] < 0)) {
-                minIdx = i;
-            }
+    private int findMaxIdx(double[] v) {
+        int idx = 0;
+        for (int i = 1; i < v.length; i++) {
+            if (v[i] > v[idx]) idx = i;
         }
-        return minIdx;
+        return idx;
     }
 
     /**
-     * This method find the index of maximum value in array
-     * @param values the array of doubles
-     * @return index of the biggest value
-     *
-     * pre-condition: array should not be empty
-     * post-condition: index is returned
-     */
-    private int findMaxIndex(double[] values) {
-        int maxIdx = 0;
-        for (int i = 1; i < values.length; i++) {
-            if (values[i] > values[maxIdx]) {
-                maxIdx = i;
-            }
-        }
-        return maxIdx;
-    }
-
-    /**
-     * This method is finding an apartment by its display name
-     * @param name the name shown in combo box
+     * This find apartment by the combo box display name
+     * @param name the display string
      * @return the apartment or null
      *
-     * pre-condition: name should not be null
-     * post-condition: apartment is returned or null
+     * pre-condition: name not null
+     * post-condition: return apartment or null
      */
     private Apartment findByName(String name) {
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
             String display = apt.getName() + " ($" + String.format("%.0f", apt.getRent()) + ")";
-            if (display.equals(name)) {
-                return apt;
-            }
+            if (display.equals(name)) return apt;
         }
         return null;
     }
 
-    private String formatScore(int score) {
-        return score >= 0 ? String.valueOf(score) : "N/A";
-    }
-
-    private String formatDist(double dist) {
-        return dist >= 0 ? dist + " mi" : "N/A";
+    /**
+     * This format a score value for display
+     * @param s the score
+     * @return formatted string or N/A
+     *
+     * pre-condition: none
+     * post-condition: return formatted string
+     */
+    private String fmtScore(int s) {
+        if (s >= 0) return String.valueOf(s);
+        return "N/A";
     }
 
     /**
-     * This method is refreshing the combo boxes with latest apartment list
+     * This format a distance value for display
+     * @param d the distance
+     * @return formatted string or N/A
      *
      * pre-condition: none
-     * post-condition: combo boxes is updated
+     * post-condition: return formatted string
+     */
+    private String fmtDist(double d) {
+        if (d >= 0) return d + " mi";
+        return "N/A";
+    }
+
+    /**
+     * This refresh the combo boxes with current apartments
+     *
+     * pre-condition: none
+     * post-condition: combos is updated
      */
     public void refresh() {
-        apartment1Combo.getItems().clear();
-        apartment2Combo.getItems().clear();
-        apartment3Combo.getItems().clear();
-        apartment3Combo.getItems().add("None");
-
+        combo1.getItems().clear();
+        combo2.getItems().clear();
+        combo3.getItems().clear();
+        combo3.getItems().add("None");
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
             String display = apt.getName() + " ($" + String.format("%.0f", apt.getRent()) + ")";
-            apartment1Combo.getItems().add(display);
-            apartment2Combo.getItems().add(display);
-            apartment3Combo.getItems().add(display);
+            combo1.getItems().add(display);
+            combo2.getItems().add(display);
+            combo3.getItems().add(display);
         }
-
-        apartment3Combo.setValue("None");
+        combo3.setValue("None");
     }
 
-    public VBox getContent() {
-        return content;
-    }
+    /**
+     * This return the content for this tab
+     * @return VBox content
+     *
+     * pre-condition: buildTab was called
+     * post-condition: content is returned
+     */
+    public VBox getContent() { return content; }
 }

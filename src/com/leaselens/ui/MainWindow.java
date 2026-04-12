@@ -1,29 +1,23 @@
 package com.leaselens.ui;
 
-import javafx.scene.Scene;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.text.Font;
-import javafx.stage.Stage;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
 import com.leaselens.service.ApartmentService;
 import com.leaselens.service.DataPersistenceService;
 
 /**
- * This class is the main window of the application
- * It have the 5 tabs and hold the apartment service that everything share
+ * This is the main window that hold all the tabs
  *
  * pre-condition: none
- * post-condition: main window is created with all tabs
+ * post-condition: main window is created with 5 tabs
  */
 public class MainWindow {
 
     private Stage stage;
     private ApartmentService service;
     private DataPersistenceService dataService;
-    private TabPane tabPane;
-
-    // tabs
     private DashboardTab dashboardTab;
     private ApartmentsTab apartmentsTab;
     private CompareTab compareTab;
@@ -31,53 +25,40 @@ public class MainWindow {
     private SettingsTab settingsTab;
 
     /**
-     * This constructor is building the main window with all tabs
-     * @param stage the JavaFX stage (window)
+     * This build the main window
+     * @param stage the JavaFX window
      *
-     * pre-condition: stage should not be null
-     * post-condition: window is built but not showing yet
+     * pre-condition: stage not null
+     * post-condition: window is built
      */
     public MainWindow(Stage stage) {
         this.stage = stage;
         this.service = new ApartmentService();
         this.dataService = new DataPersistenceService();
-
-        // load saved data if any
         dataService.load(service);
-
         buildUI();
     }
 
     /**
-     * This method is building all the UI parts
+     * This build all the UI parts
      *
-     * pre-condition: service should be set up
-     * post-condition: all tabs is created and added to window
+     * pre-condition: service is ready
+     * post-condition: all tabs is created
      */
     private void buildUI() {
-        // create the tab pane
-        tabPane = new TabPane();
-        tabPane.setStyle(
-            "-fx-tab-min-height: 40px; " +
-            "-fx-tab-max-height: 40px; " +
-            "-fx-font-size: 15px;"
-        );
+        TabPane tabPane = new TabPane();
 
-        // create each tab
         dashboardTab = new DashboardTab(service);
         apartmentsTab = new ApartmentsTab(service);
         compareTab = new CompareTab(service);
         expenseTab = new ExpenseTab(service);
-        settingsTab = new SettingsTab(service, dataService);
+        settingsTab = new SettingsTab(service);
 
-        // make tabs
-        Tab tab1 = new Tab("  Dashboard  ", dashboardTab.getContent());
-        Tab tab2 = new Tab("  My Apartments  ", apartmentsTab.getContent());
-        Tab tab3 = new Tab("  Compare  ", compareTab.getContent());
-        Tab tab4 = new Tab("  Expenses  ", expenseTab.getContent());
-        Tab tab5 = new Tab("  Preferences  ", settingsTab.getContent());
-
-        // dont let user close tabs
+        Tab tab1 = new Tab("Dashboard", dashboardTab.getContent());
+        Tab tab2 = new Tab("My Apartments", apartmentsTab.getContent());
+        Tab tab3 = new Tab("Compare", compareTab.getContent());
+        Tab tab4 = new Tab("Expenses", expenseTab.getContent());
+        Tab tab5 = new Tab("Preferences", settingsTab.getContent());
         tab1.setClosable(false);
         tab2.setClosable(false);
         tab3.setClosable(false);
@@ -86,50 +67,28 @@ public class MainWindow {
 
         tabPane.getTabs().addAll(tab1, tab2, tab3, tab4, tab5);
 
-        // refresh tabs when user switch to them
-        tabPane.getSelectionModel().selectedItemProperty().addListener(
-            (observable, oldTab, newTab) -> {
-                refreshCurrentTab(newTab.getText().trim());
-            }
-        );
+        // refresh when user switch tab
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            String name = newTab.getText();
+            if (name.equals("Dashboard")) dashboardTab.refresh();
+            else if (name.equals("My Apartments")) apartmentsTab.refresh();
+            else if (name.equals("Compare")) compareTab.refresh();
+            else if (name.equals("Expenses")) expenseTab.refresh();
+        });
 
-        // set up the main layout
         BorderPane root = new BorderPane();
         root.setCenter(tabPane);
-        root.setStyle("-fx-background-color: #f0f2f5;");
 
-        Scene scene = new Scene(root, 1250, 850);
-
+        Scene scene = new Scene(root, 1200, 800);
         stage.setTitle("LeaseLens - Apartment Search Organizer");
         stage.setScene(scene);
-        stage.setMinWidth(1000);
-        stage.setMinHeight(700);
     }
 
     /**
-     * This method is refreshing the tab that user just switched to
-     * @param tabName the name of the tab
+     * This show the window on screen
      *
-     * pre-condition: tabName should be valid tab name
-     * post-condition: tab content is refreshed with latest data
-     */
-    private void refreshCurrentTab(String tabName) {
-        if (tabName.equals("Dashboard")) {
-            dashboardTab.refresh();
-        } else if (tabName.equals("My Apartments")) {
-            apartmentsTab.refresh();
-        } else if (tabName.equals("Compare")) {
-            compareTab.refresh();
-        } else if (tabName.equals("Expenses")) {
-            expenseTab.refresh();
-        }
-    }
-
-    /**
-     * This method is showing the window on screen
-     *
-     * pre-condition: buildUI should have been called
-     * post-condition: window is visible to user
+     * pre-condition: buildUI was called
+     * post-condition: window is visible
      */
     public void show() {
         stage.show();
