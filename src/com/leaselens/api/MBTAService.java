@@ -7,7 +7,7 @@ import java.net.http.HttpResponse;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.leaselens.util.HaversineCalculator;
+import com.leaselens.calculators.HaversineCalculator;
 
 /**
  * This class is calling the MBTA API to find nearest T stops

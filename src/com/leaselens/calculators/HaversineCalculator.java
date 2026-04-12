@@ -1,4 +1,4 @@
-package com.leaselens.util;
+package com.leaselens.calculators;
 
 /**
  * This class is calculating distance between two places on earth

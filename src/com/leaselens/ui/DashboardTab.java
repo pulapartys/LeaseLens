@@ -8,11 +8,12 @@ import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
 import com.leaselens.model.UserPreferences;
 import com.leaselens.service.ApartmentService;
-import com.leaselens.util.ScoreCalculator;
+import com.leaselens.calculators.ScoreCalculator;
+import com.leaselens.datastructures.ApartmentSorter;
 
 /**
- * This is the Dashboard tab - the home screen
- * It show stats, top 3 picks, and budget info
+ * This class is the Dashboard tab - the home screen of the app
+ * It show stats cards, top 3 picks using bubble sort, and budget overview
  *
  * pre-condition: service not null
  * post-condition: dashboard is created

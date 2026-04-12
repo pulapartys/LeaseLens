@@ -461,36 +461,53 @@ public class AddApartmentDialog {
 
         // save
         if (editingApartment != null) {
-            Apartment u = editingApartment.makeCopy();
-            u.setName(street);
-            u.setAddress(address);
-            u.setRent(rent);
-            u.setSqft(sqft);
-            u.setBedrooms(bedrooms);
-            u.setBathrooms(bathrooms);
-            setAmenities(u);
-            u.setAvailableDate(dateText);
-            u.setLeaseLength(leaseLength);
-            u.setBrokerFee(brokerFeeCheck.isSelected());
-            u.setUtilitiesIncluded(utilitiesCheck.isSelected());
-            u.setSource(sourceCombo.getValue());
-            u.setSourceURL(sourceURLField.getText().trim());
-            u.setNotes(notesArea.getText().trim());
-            u.setStatus(Status.valueOf(statusCombo.getValue()));
-            service.updateApartment(u);
+            // editing existing apartment
+            Apartment updated = editingApartment.makeCopy();
+            updated.setName(street);
+            updated.setAddress(address);
+            updated.setNeighborhood(neighborhood);
+            updated.setRent(rent);
+            updated.setSqft(sqft);
+            updated.setBedrooms(bedrooms);
+            updated.setBathrooms(bathrooms);
+            updated.setHasParking(parkingCheck.isSelected());
+            updated.setHasLaundry(laundryCheck.isSelected());
+            updated.setHasDishwasher(dishwasherCheck.isSelected());
+            updated.setHasAC(acCheck.isSelected());
+            updated.setPetFriendly(petCheck.isSelected());
+            updated.setFurnished(furnishedCheck.isSelected());
+            updated.setAvailableDate(dateText);
+            updated.setLeaseLength(leaseLength);
+            updated.setBrokerFee(brokerFeeCheck.isSelected());
+            updated.setUtilitiesIncluded(utilitiesCheck.isSelected());
+            updated.setSource(sourceCombo.getValue());
+            updated.setSourceURL(sourceURLField.getText().trim());
+            updated.setNotes(notesArea.getText().trim());
+            updated.setStatus(Status.valueOf(statusCombo.getValue()));
+
+            service.updateApartment(updated);
         } else {
-            Apartment a = new Apartment(street, address, rent, sqft, bedrooms, bathrooms);
-            setAmenities(a);
-            a.setAvailableDate(dateText);
-            a.setLeaseLength(leaseLength);
-            a.setBrokerFee(brokerFeeCheck.isSelected());
-            a.setUtilitiesIncluded(utilitiesCheck.isSelected());
-            a.setSource(sourceCombo.getValue());
-            a.setSourceURL(sourceURLField.getText().trim());
-            a.setNotes(notesArea.getText().trim());
-            a.setStatus(Status.valueOf(statusCombo.getValue()));
-            service.enrichWithApiData(a);
-            service.addApartment(a);
+            // adding new apartment
+            Apartment apartment = new Apartment(street, address, rent, sqft, bedrooms, bathrooms);
+            apartment.setNeighborhood(neighborhood);
+            apartment.setHasParking(parkingCheck.isSelected());
+            apartment.setHasLaundry(laundryCheck.isSelected());
+            apartment.setHasDishwasher(dishwasherCheck.isSelected());
+            apartment.setHasAC(acCheck.isSelected());
+            apartment.setPetFriendly(petCheck.isSelected());
+            apartment.setFurnished(furnishedCheck.isSelected());
+            apartment.setAvailableDate(dateText);
+            apartment.setLeaseLength(leaseLength);
+            apartment.setBrokerFee(brokerFeeCheck.isSelected());
+            apartment.setUtilitiesIncluded(utilitiesCheck.isSelected());
+            apartment.setSource(sourceCombo.getValue());
+            apartment.setSourceURL(sourceURLField.getText().trim());
+            apartment.setNotes(notesArea.getText().trim());
+            apartment.setStatus(Status.valueOf(statusCombo.getValue()));
+
+            // try to get API data in background
+            service.enrichWithApiData(apartment);
+            service.addApartment(apartment);
         }
         saved = true;
         dialogStage.close();

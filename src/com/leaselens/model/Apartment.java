@@ -15,6 +15,7 @@ public class Apartment {
     private String id;
     private String name;
     private String address;
+    private String neighborhood;
     private double rent;
     private double sqft;
     private int bedrooms;
@@ -104,6 +105,7 @@ public class Apartment {
         this.brokerFee = false;
         this.utilitiesIncluded = false;
         this.leaseLength = 12;
+        this.neighborhood = "";
         this.source = "";
         this.sourceURL = "";
         this.notes = "";
@@ -136,6 +138,7 @@ public class Apartment {
     public Apartment() {
         this.id = UUID.randomUUID().toString().substring(0, 8);
         this.status = Status.NEW;
+        this.neighborhood = "";
     }
 
     /**
@@ -151,6 +154,7 @@ public class Apartment {
         copy.id = this.id;
         copy.name = this.name;
         copy.address = this.address;
+        copy.neighborhood = this.neighborhood;
         copy.rent = this.rent;
         copy.sqft = this.sqft;
         copy.bedrooms = this.bedrooms;
@@ -220,6 +224,9 @@ public class Apartment {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getNeighborhood() { return neighborhood; }
+    public void setNeighborhood(String neighborhood) { this.neighborhood = neighborhood; }
 
     public double getRent() { return rent; }
     public void setRent(double rent) { this.rent = rent; }

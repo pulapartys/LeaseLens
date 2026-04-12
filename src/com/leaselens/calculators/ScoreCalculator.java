@@ -1,4 +1,4 @@
-package com.leaselens.util;
+package com.leaselens.calculators;
 
 import com.leaselens.model.Apartment;
 import com.leaselens.model.UserPreferences;

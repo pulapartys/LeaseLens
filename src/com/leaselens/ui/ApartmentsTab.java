@@ -81,7 +81,8 @@ public class ApartmentsTab {
 
         // search and filter
         searchField = new TextField();
-        searchField.setPromptText("Search by name or address...");
+        searchField.setPromptText("Search by neighborhood...");
+        searchField.setFont(Font.font("Arial", 13));
         searchField.setMinWidth(250);
 
         statusFilter = new ComboBox<String>();
@@ -89,8 +90,7 @@ public class ApartmentsTab {
         statusFilter.setValue("All");
 
         sortBy = new ComboBox<String>();
-        sortBy.getItems().addAll("Rent (Low-High)", "Rent (High-Low)", "Sqft (Large-Small)",
-            "Bedrooms", "Walk Score", "Safety Score", "Distance to T");
+        sortBy.getItems().addAll("Rent (Low-High)", "Bedrooms", "Walk Score", "Distance to T");
         sortBy.setValue("Rent (Low-High)");
 
         HBox filterRow = new HBox(10);
@@ -294,47 +294,57 @@ public class ApartmentsTab {
      */
     private void applyFilters() {
         tableData.clear();
+
+        // step 1: get apartments based on search or price range
+        ArrayList<Apartment> results;
         String searchText = searchField.getText().trim();
         double minPrice = minPriceSlider.getValue();
         double maxPrice = maxPriceSlider.getValue();
 
-        ArrayList<Apartment> results;
         if (!searchText.isEmpty()) {
+            // use hash map search
             results = service.search(searchText);
         } else if (minPrice > 0 || maxPrice < 5000) {
+            // filter by price range
             results = service.filterByPriceRange(minPrice, maxPrice);
         } else {
+            // show all
             results = new ArrayList<Apartment>();
             for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
-                results.add(service.getAllApartments().get(i));
+                Apartment apt = service.getAllApartments().get(i);
+                results.add(apt);
             }
         }
 
-        // filter by status
-        String statusVal = statusFilter.getValue();
-        if (!statusVal.equals("All")) {
-            ArrayList<Apartment> filtered = new ArrayList<Apartment>();
+        // step 2: filter by status
+        String statusValue = statusFilter.getValue();
+        if (!statusValue.equals("All")) {
+            ArrayList<Apartment> statusFiltered = new ArrayList<Apartment>();
             for (int i = 0; i < results.size(); i++) {
-                if (results.get(i).getStatus().toString().equals(statusVal)) {
-                    filtered.add(results.get(i));
+                if (results.get(i).getStatus().toString().equals(statusValue)) {
+                    statusFiltered.add(results.get(i));
                 }
             }
-            results = filtered;
+            results = statusFiltered;
         }
 
-        // sort with merge sort
-        Apartment[] arr = results.toArray(new Apartment[0]);
-        String sortVal = sortBy.getValue();
-        if (sortVal.equals("Rent (Low-High)")) ApartmentSorter.mergeSort(arr, ApartmentSorter.byRentLowToHigh());
-        else if (sortVal.equals("Rent (High-Low)")) ApartmentSorter.mergeSort(arr, ApartmentSorter.byRentHighToLow());
-        else if (sortVal.equals("Sqft (Large-Small)")) ApartmentSorter.mergeSort(arr, ApartmentSorter.bySqftHighToLow());
-        else if (sortVal.equals("Bedrooms")) ApartmentSorter.mergeSort(arr, ApartmentSorter.byBedroomsHighToLow());
-        else if (sortVal.equals("Walk Score")) ApartmentSorter.mergeSort(arr, ApartmentSorter.byWalkScoreHighToLow());
-        else if (sortVal.equals("Safety Score")) ApartmentSorter.mergeSort(arr, ApartmentSorter.bySafetyScoreHighToLow());
-        else if (sortVal.equals("Distance to T")) ApartmentSorter.mergeSort(arr, ApartmentSorter.byDistanceToTLowToHigh());
+        // step 3: sort using our merge sort
+        Apartment[] sortArray = results.toArray(new Apartment[0]);
+        String sortValue = sortBy.getValue();
 
-        for (int i = 0; i < arr.length; i++) {
-            tableData.add(arr[i]);
+        if (sortValue.equals("Rent (Low-High)")) {
+            ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byRentLowToHigh());
+        } else if (sortValue.equals("Bedrooms")) {
+            ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byBedroomsHighToLow());
+        } else if (sortValue.equals("Walk Score")) {
+            ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byWalkScoreHighToLow());
+        } else if (sortValue.equals("Distance to T")) {
+            ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byDistanceToTLowToHigh());
+        }
+
+        // add to table
+        for (int i = 0; i < sortArray.length; i++) {
+            tableData.add(sortArray[i]);
         }
     }
 
