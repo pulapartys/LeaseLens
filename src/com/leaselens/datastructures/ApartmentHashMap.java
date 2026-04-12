@@ -28,9 +28,11 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
             this.next = null;
         }
     }
-
+    // the array of buckets
     private Entry[] table;
+    // how many entries are currently stored
     private int size;
+    // how many buckets the array has
     private int capacity;
 
     /**
@@ -182,18 +184,22 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
         for (int i = 0; i < capacity; i++) {
             Entry current = table[i];
             while (current != null) {
-                if (current.key.contains(lowerQuery)) {
-                    // check if we already have this apartment in results
-                    boolean alreadyAdded = false;
-                    for (int j = 0; j < results.size(); j++) {
-                        if (results.get(j).getId().equals(current.value.getId())) {
-                            alreadyAdded = true;
-                            break;
-                        }
+                // skip if key does not match the query
+                if (!current.key.contains(lowerQuery)) {
+                    current = current.next;
+                    continue;
+                }
+
+                // check if we already have this apartment in results
+                boolean alreadyAdded = false;
+                for (int j = 0; j < results.size(); j++) {
+                    if (results.get(j).getId().equals(current.value.getId())) {
+                        alreadyAdded = true;
+                        break;
                     }
-                    if (!alreadyAdded) {
-                        results.add(current.value);
-                    }
+                }
+                if (!alreadyAdded) {
+                    results.add(current.value);
                 }
                 current = current.next;
             }
