@@ -265,6 +265,26 @@ public class ApartmentService {
         existing.setSourceURL(updated.getSourceURL());
         existing.setNotes(updated.getNotes());
 
+        // update API data fields too (needed when address changes)
+        existing.setLatitude(updated.getLatitude());
+        existing.setLongitude(updated.getLongitude());
+        existing.setWalkScore(updated.getWalkScore());
+        existing.setTransitScore(updated.getTransitScore());
+        existing.setBikeScore(updated.getBikeScore());
+        existing.setNearbyFood(updated.getNearbyFood());
+        existing.setNearbyShops(updated.getNearbyShops());
+        existing.setNearbyServices(updated.getNearbyServices());
+        existing.setNearbyTransit(updated.getNearbyTransit());
+        existing.setNearbyLeisure(updated.getNearbyLeisure());
+        existing.setNearbyBike(updated.getNearbyBike());
+        existing.setNearestTStop(updated.getNearestTStop());
+        existing.setDistanceToT(updated.getDistanceToT());
+        existing.setSafetyScore(updated.getSafetyScore());
+        existing.setCrimeCount(updated.getCrimeCount());
+        existing.setCrimeBreakdown(updated.getCrimeBreakdown());
+        existing.setRecreationCount(updated.getRecreationCount());
+        existing.setNearbyRecreation(updated.getNearbyRecreation());
+
         Action action = new Action("EDIT", beforeCopy, existing.makeCopy());
         undoStack.push(action);
         redoStack.clear();

@@ -282,8 +282,16 @@ public class ApartmentsTab {
             }
         });
 
+        TableColumn<Apartment, String> sourceCol = new TableColumn<>("Source");
+        sourceCol.setCellValueFactory(new PropertyValueFactory<>("source"));
+        sourceCol.setMinWidth(80);
+
+        TableColumn<Apartment, String> notesCol = new TableColumn<>("Notes");
+        notesCol.setCellValueFactory(new PropertyValueFactory<>("notes"));
+        notesCol.setMinWidth(120);
+
         table.getColumns().addAll(nameCol, addrCol, rentCol, sqftCol, bedCol, bathCol,
-            walkCol, safetyCol, parksCol, distCol, statusCol);
+            walkCol, safetyCol, parksCol, distCol, statusCol, sourceCol, notesCol);
     }
 
     /**
