@@ -1,549 +1,269 @@
 package com.leaselens.ui;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.geometry.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.service.ApartmentService;
 import com.leaselens.datastructures.ExpenseHashMap;
 
 /**
- * This class is the Expense Calculator tab where user can enter monthly
- * expenses like utilities groceries transport etc for each apartment
- * Then it calculate total monthly and yearly cost of living
+ * This is the Expense Calculator tab
+ * User enter monthly expenses and it calculate total cost
+ * It use a HashMap to store expense categories
  *
- * It use a HashMap to store expense category name and dollar amount
- *
- * pre-condition: service should not be null
- * post-condition: expense calculator tab is created
+ * pre-condition: service not null
+ * post-condition: expense tab is created
  */
 public class ExpenseTab {
 
     private ApartmentService service;
     private ScrollPane content;
     private VBox mainBox;
-
-    // dropdown to pick apartment
     private ComboBox<String> apartmentCombo;
-
-    // text fields for each expense category
     private TextField utilitiesField;
     private TextField groceriesField;
     private TextField transportField;
     private TextField internetField;
     private TextField insuranceField;
     private TextField otherField;
-
-    // labels for showing results
-    private Label rentAmountLabel;
-    private Label totalMonthlyLabel;
-    private Label totalYearlyLabel;
     private VBox resultsBox;
-    private VBox breakdownBox;
-
-    // HashMap to store expenses for the selected apartment
-    // key = category name like "Utilities", value = dollar amount
     private ExpenseHashMap expenseMap;
 
     /**
-     * This constructor is making the expense calculator tab
+     * This make the expense calculator tab
      * @param service the apartment service
      *
-     * pre-condition: service should not be null
-     * post-condition: tab is built with all fields
+     * pre-condition: service not null
+     * post-condition: expense tab is built
      */
     public ExpenseTab(ApartmentService service) {
         this.service = service;
         this.expenseMap = new ExpenseHashMap(50);
-        this.mainBox = new VBox(20);
+        this.mainBox = new VBox(15);
         buildTab();
-
-        // wrap in scroll pane so it scroll if window is small
         ScrollPane scroll = new ScrollPane(mainBox);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background: #f0f2f5; -fx-background-color: #f0f2f5;");
         this.content = scroll;
     }
 
     /**
-     * This method is building the expense calculator tab UI
+     * This build the expense tab layout
      *
-     * pre-condition: none
-     * post-condition: all the input fields and result labels is created
+     * pre-condition: mainBox not null
+     * post-condition: tab is built with form and results
      */
     private void buildTab() {
-        mainBox.setPadding(new Insets(25));
+        mainBox.setPadding(new Insets(20));
         mainBox.setStyle("-fx-background-color: #f0f2f5;");
 
-        // header
         Label header = new Label("Expense Calculator");
-        header.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         header.setStyle("-fx-text-fill: #1a237e;");
+        Label subtitle = new Label("Estimate your total monthly and yearly living costs. Pick an apartment, enter your expenses, and click Calculate.");
+        subtitle.setStyle("-fx-text-fill: #666; -fx-font-size: 13;");
+        subtitle.setWrapText(true);
 
-        Label subtitle = new Label("Calculate the real monthly cost of living for each apartment");
-        subtitle.setFont(Font.font("Arial", 14));
-        subtitle.setStyle("-fx-text-fill: #666;");
-
-        // ---- APARTMENT SELECTION ----
-        Label selectLabel = new Label("Select Apartment:");
-        selectLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-
+        // apartment selector
         apartmentCombo = new ComboBox<String>();
         apartmentCombo.setMinWidth(300);
-        apartmentCombo.setStyle("-fx-font-size: 13px;");
         apartmentCombo.setPromptText("Choose an apartment...");
 
-        // when user picks an apartment, show its rent
-        apartmentCombo.setOnAction(e -> loadApartmentRent());
-
-        HBox selectRow = new HBox(15);
+        HBox selectRow = new HBox(10);
+        selectRow.setPadding(new Insets(10));
         selectRow.setAlignment(Pos.CENTER_LEFT);
-        selectRow.setPadding(new Insets(15));
-        selectRow.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 8; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        selectRow.getChildren().addAll(selectLabel, apartmentCombo);
+        selectRow.setStyle("-fx-background-color: white; -fx-background-radius: 5;");
+        selectRow.getChildren().addAll(new Label("Select Apartment:"), apartmentCombo);
 
-        // ---- EXPENSE INPUT SECTION ----
-        Label expenseHeader = new Label("Monthly Expenses");
-        expenseHeader.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        expenseHeader.setStyle("-fx-text-fill: #1a237e;");
+        // expense fields - enter dollar amounts, leave blank or 0 if not applicable
+        utilitiesField = new TextField();
+        utilitiesField.setPromptText("0");
+        groceriesField = new TextField();
+        groceriesField.setPromptText("0");
+        transportField = new TextField();
+        transportField.setPromptText("0");
+        internetField = new TextField();
+        internetField.setPromptText("0");
+        insuranceField = new TextField();
+        insuranceField.setPromptText("0");
+        otherField = new TextField();
+        otherField.setPromptText("0");
 
-        Label expenseSubtitle = new Label("Enter how much you expect to spend per month in each category");
-        expenseSubtitle.setFont(Font.font("Arial", 13));
-        expenseSubtitle.setStyle("-fx-text-fill: #666;");
-
-        VBox expenseBox = new VBox(12);
-        expenseBox.setPadding(new Insets(20));
-        expenseBox.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 10; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-
-        // create input fields for each category
-        utilitiesField = new TextField("0");
-        groceriesField = new TextField("0");
-        transportField = new TextField("0");
-        internetField = new TextField("0");
-        insuranceField = new TextField("0");
-        otherField = new TextField("0");
+        Label expHeader = new Label("Monthly Expenses (enter dollar amounts, leave blank if none)");
+        expHeader.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        expHeader.setStyle("-fx-text-fill: #3366cc;");
 
         GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(15);
+        grid.setHgap(15);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+        grid.setStyle("-fx-background-color: white; -fx-background-radius: 5;");
+        addExpenseRow(grid, 0, "Utilities (electric, gas, water):", utilitiesField);
+        addExpenseRow(grid, 1, "Groceries:", groceriesField);
+        addExpenseRow(grid, 2, "Transport (T pass, gas, parking):", transportField);
+        addExpenseRow(grid, 3, "Internet / Phone:", internetField);
+        addExpenseRow(grid, 4, "Renter's Insurance:", insuranceField);
+        addExpenseRow(grid, 5, "Other:", otherField);
 
-        // row 0 - utilities
-        grid.add(makeFieldLabel("Utilities (electric, gas, water):"), 0, 0);
-        grid.add(makeDollarField(utilitiesField), 1, 0);
+        Button calcBtn = new Button("Calculate Total Cost");
+        calcBtn.setStyle("-fx-background-color: #3366cc; -fx-text-fill: white;");
+        calcBtn.setOnAction(e -> calculateExpenses());
 
-        // row 1 - groceries
-        grid.add(makeFieldLabel("Groceries:"), 0, 1);
-        grid.add(makeDollarField(groceriesField), 1, 1);
-
-        // row 2 - transport
-        grid.add(makeFieldLabel("Transport (T pass, gas, parking):"), 0, 2);
-        grid.add(makeDollarField(transportField), 1, 2);
-
-        // row 3 - internet
-        grid.add(makeFieldLabel("Internet / Phone:"), 0, 3);
-        grid.add(makeDollarField(internetField), 1, 3);
-
-        // row 4 - insurance
-        grid.add(makeFieldLabel("Renter's Insurance:"), 0, 4);
-        grid.add(makeDollarField(insuranceField), 1, 4);
-
-        // row 5 - other
-        grid.add(makeFieldLabel("Other:"), 0, 5);
-        grid.add(makeDollarField(otherField), 1, 5);
-
-        expenseBox.getChildren().add(grid);
-
-        // ---- CALCULATE BUTTON ----
-        Button calculateButton = new Button("Calculate Total Cost");
-        calculateButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        calculateButton.setPadding(new Insets(12, 30, 12, 30));
-        calculateButton.setStyle(
-            "-fx-background-color: #1a237e; " +
-            "-fx-text-fill: white; " +
-            "-fx-background-radius: 6; " +
-            "-fx-cursor: hand;"
-        );
-        calculateButton.setOnAction(e -> calculateExpenses());
-
-        // ---- RESULTS SECTION ----
-        resultsBox = new VBox(15);
-        resultsBox.setPadding(new Insets(20));
-        resultsBox.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 10; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
+        resultsBox = new VBox(10);
+        resultsBox.setPadding(new Insets(10));
+        resultsBox.setStyle("-fx-background-color: white; -fx-border-color: #2e7d32; -fx-border-width: 0 0 0 4; -fx-background-radius: 5;");
         resultsBox.setVisible(false);
 
-        // add everything to main box
-        mainBox.getChildren().addAll(
-            header, subtitle,
-            selectRow,
-            expenseHeader, expenseSubtitle, expenseBox,
-            calculateButton,
-            resultsBox
-        );
+        mainBox.getChildren().addAll(header, subtitle, selectRow, expHeader, grid, calcBtn, resultsBox);
     }
 
     /**
-     * This method is making a label for the expense input fields
-     * @param text the label text
-     * @return the styled label
+     * This add one expense row to the grid
+     * @param grid the grid pane
+     * @param row the row number
+     * @param label the expense category name
+     * @param field the text field for amount
      *
-     * pre-condition: text should not be null
-     * post-condition: label is returned
+     * pre-condition: grid not null
+     * post-condition: row is added to grid
      */
-    private Label makeFieldLabel(String text) {
-        Label label = new Label(text);
-        label.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        label.setStyle("-fx-text-fill: #333;");
-        label.setMinWidth(250);
-        return label;
-    }
-
-    /**
-     * This method is wrapping a text field with a dollar sign in front
-     * @param field the text field to wrap
-     * @return HBox with dollar sign and text field
-     *
-     * pre-condition: field should not be null
-     * post-condition: styled HBox is returned
-     */
-    private HBox makeDollarField(TextField field) {
-        field.setFont(Font.font("Arial", 13));
+    private void addExpenseRow(GridPane grid, int row, String label, TextField field) {
+        Label l = new Label(label);
+        l.setFont(Font.font("Arial", 13));
+        l.setMinWidth(250);
         field.setMaxWidth(120);
-        field.setStyle("-fx-border-color: #ddd; -fx-border-radius: 5; -fx-padding: 8;");
-
-        Label dollar = new Label("$");
-        dollar.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        dollar.setStyle("-fx-text-fill: #666;");
-
         HBox box = new HBox(5);
         box.setAlignment(Pos.CENTER_LEFT);
-        box.getChildren().addAll(dollar, field);
-        return box;
+        box.getChildren().addAll(new Label("$"), field);
+        grid.add(l, 0, row);
+        grid.add(box, 1, row);
     }
 
     /**
-     * This method is loading the rent for the selected apartment
-     * So we can show it in the results
+     * This calculate all expenses and show results
+     * It use the ExpenseHashMap to store categories
      *
-     * pre-condition: an apartment should be selected in the combo box
-     * post-condition: rent label is updated
-     */
-    private void loadApartmentRent() {
-        // clear old results when switching apartments
-        resultsBox.setVisible(false);
-    }
-
-    /**
-     * This method is doing the expense calculation
-     * It put all expenses into the HashMap then add them up with rent
-     *
-     * pre-condition: user should have selected an apartment and entered numbers
-     * post-condition: results is displayed with breakdown
+     * pre-condition: apartment is selected
+     * post-condition: results is shown with totals
      */
     private void calculateExpenses() {
-        // check if apartment is selected
         String selected = apartmentCombo.getValue();
         if (selected == null || selected.isEmpty()) {
             resultsBox.getChildren().clear();
-            Label errorLabel = new Label("Please select an apartment first!");
-            errorLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            errorLabel.setStyle("-fx-text-fill: #c62828;");
-            resultsBox.getChildren().add(errorLabel);
+            resultsBox.getChildren().add(new Label("Please select an apartment first!"));
             resultsBox.setVisible(true);
             return;
         }
 
-        // find the apartment
-        Apartment apartment = findSelectedApartment(selected);
-        if (apartment == null) {
-            return;
-        }
+        Apartment apt = findApartment(selected);
+        if (apt == null) return;
 
-        // clear the HashMap and put new values in
+        // store expenses in HashMap
         expenseMap.clear();
-
-        // try to read each field and put into HashMap
         try {
-            double utilities = parseField(utilitiesField);
-            double groceries = parseField(groceriesField);
-            double transport = parseField(transportField);
-            double internet = parseField(internetField);
-            double insurance = parseField(insuranceField);
-            double other = parseField(otherField);
-
-            // put each expense into the HashMap
-            expenseMap.put("Utilities", utilities);
-            expenseMap.put("Groceries", groceries);
-            expenseMap.put("Transport", transport);
-            expenseMap.put("Internet / Phone", internet);
-            expenseMap.put("Renter's Insurance", insurance);
-            expenseMap.put("Other", other);
-
+            expenseMap.put("Utilities", parseField(utilitiesField));
+            expenseMap.put("Groceries", parseField(groceriesField));
+            expenseMap.put("Transport", parseField(transportField));
+            expenseMap.put("Internet / Phone", parseField(internetField));
+            expenseMap.put("Renter's Insurance", parseField(insuranceField));
+            expenseMap.put("Other", parseField(otherField));
         } catch (Exception e) {
             resultsBox.getChildren().clear();
-            Label errorLabel = new Label("Error: Please enter valid numbers in all fields!");
-            errorLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            errorLabel.setStyle("-fx-text-fill: #c62828;");
-            resultsBox.getChildren().add(errorLabel);
+            resultsBox.getChildren().add(new Label("Error: Please enter valid numbers!"));
             resultsBox.setVisible(true);
             return;
         }
 
-        // calculate total expenses from the HashMap
-        double totalExpenses = 0;
-        for (String category : expenseMap.getAllKeys()) {
-            totalExpenses = totalExpenses + expenseMap.get(category);
+        // add up all expenses from HashMap
+        double totalExp = 0;
+        for (String cat : expenseMap.getAllKeys()) {
+            totalExp = totalExp + expenseMap.get(cat);
         }
 
-        double rent = apartment.getRent();
-        double totalMonthly = rent + totalExpenses;
-        double totalYearly = totalMonthly * 12;
+        double rent = apt.getRent();
+        double monthly = rent + totalExp;
+        double yearly = monthly * 12;
 
         // show results
-        showResults(apartment.getName(), rent, totalExpenses, totalMonthly, totalYearly);
+        resultsBox.getChildren().clear();
+        Label rHeader = new Label("Cost Breakdown for: " + apt.getName());
+        rHeader.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        rHeader.setStyle("-fx-text-fill: #2e7d32;");
+
+        String info = "Rent: $" + String.format("%.2f", rent) + "\n";
+        for (String cat : expenseMap.getAllKeys()) {
+            double amt = expenseMap.get(cat);
+            if (amt > 0) {
+                info = info + cat + ": $" + String.format("%.2f", amt) + "\n";
+            }
+        }
+        info = info + "\nTotal Expenses: $" + String.format("%.2f", totalExp);
+        info = info + "\nTotal Monthly Cost: $" + String.format("%.2f", monthly);
+        info = info + "\nTotal Yearly Cost: $" + String.format("%.2f", yearly);
+
+        Label infoLabel = new Label(info);
+        infoLabel.setFont(Font.font("Arial", 14));
+        resultsBox.getChildren().addAll(rHeader, infoLabel);
+        resultsBox.setVisible(true);
     }
 
     /**
-     * This method is parsing a text field to get the dollar amount
-     * If field is empty or blank it return 0
-     * @param field the text field to parse
-     * @return the dollar amount as double
+     * This parse a text field to get a number
+     * @param field the text field
+     * @return the number value
      *
-     * pre-condition: field should not be null
-     * post-condition: a number is returned
+     * pre-condition: field not null
+     * post-condition: return the number or 0
      */
     private double parseField(TextField field) {
         String text = field.getText().trim();
-        if (text.isEmpty()) {
-            return 0;
-        }
+        if (text.isEmpty()) return 0;
         return Double.parseDouble(text);
     }
 
     /**
-     * This method is finding the apartment object from the combo box text
-     * @param comboText the text from the combo box
-     * @return the apartment object or null
+     * This find apartment by combo box text
+     * @param comboText the display string
+     * @return the apartment or null
      *
-     * pre-condition: comboText should not be null
-     * post-condition: apartment is returned if found
+     * pre-condition: comboText not null
+     * post-condition: return apartment or null
      */
-    private Apartment findSelectedApartment(String comboText) {
+    private Apartment findApartment(String comboText) {
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
             String display = apt.getName() + " - $" + String.format("%.0f", apt.getRent()) + "/mo";
-            if (display.equals(comboText)) {
-                return apt;
-            }
+            if (display.equals(comboText)) return apt;
         }
         return null;
     }
 
     /**
-     * This method is showing the calculation results in a nice format
-     * It show a breakdown of each expense from the HashMap plus totals
-     * @param aptName the apartment name
-     * @param rent the monthly rent
-     * @param totalExpenses total of all expenses
-     * @param totalMonthly rent plus expenses
-     * @param totalYearly monthly times 12
-     *
-     * pre-condition: all values should be calculated already
-     * post-condition: results section is visible with all numbers
-     */
-    private void showResults(String aptName, double rent, double totalExpenses,
-                             double totalMonthly, double totalYearly) {
-        resultsBox.getChildren().clear();
-
-        // results header
-        Label resultsHeader = new Label("Cost Breakdown for: " + aptName);
-        resultsHeader.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        resultsHeader.setStyle("-fx-text-fill: #1a237e;");
-
-        // breakdown grid
-        GridPane breakdownGrid = new GridPane();
-        breakdownGrid.setHgap(30);
-        breakdownGrid.setVgap(8);
-
-        // rent row
-        int row = 0;
-        breakdownGrid.add(makeBreakdownLabel("Rent:"), 0, row);
-        breakdownGrid.add(makeBreakdownValue("$" + String.format("%.2f", rent)), 1, row);
-        row++;
-
-        // add separator
-        Separator sep1 = new Separator();
-        breakdownGrid.add(sep1, 0, row, 2, 1);
-        row++;
-
-        // loop through the HashMap to show each expense
-        for (String category : expenseMap.getAllKeys()) {
-            double amount = expenseMap.get(category);
-            if (amount > 0) {
-                breakdownGrid.add(makeBreakdownLabel(category + ":"), 0, row);
-                breakdownGrid.add(makeBreakdownValue("$" + String.format("%.2f", amount)), 1, row);
-                row++;
-            }
-        }
-
-        // separator before totals
-        Separator sep2 = new Separator();
-        breakdownGrid.add(sep2, 0, row, 2, 1);
-        row++;
-
-        // total expenses row
-        Label expLabel = new Label("Total Expenses:");
-        expLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        expLabel.setStyle("-fx-text-fill: #333;");
-        Label expValue = new Label("$" + String.format("%.2f", totalExpenses));
-        expValue.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        expValue.setStyle("-fx-text-fill: #333;");
-        breakdownGrid.add(expLabel, 0, row);
-        breakdownGrid.add(expValue, 1, row);
-        row++;
-
-        // total monthly card
-        HBox monthlyCard = makeTotalCard(
-            "Total Monthly Cost",
-            "$" + String.format("%.2f", totalMonthly),
-            "#1a237e"
-        );
-
-        // total yearly card
-        HBox yearlyCard = makeTotalCard(
-            "Total Yearly Cost",
-            "$" + String.format("%.2f", totalYearly),
-            "#4caf50"
-        );
-
-        HBox totalCards = new HBox(20);
-        totalCards.getChildren().addAll(monthlyCard, yearlyCard);
-
-        resultsBox.getChildren().addAll(resultsHeader, breakdownGrid, totalCards);
-        resultsBox.setVisible(true);
-    }
-
-    /**
-     * This method is making a label for the breakdown section
-     * @param text the label text
-     * @return a styled label
+     * This refresh the apartment combo box
      *
      * pre-condition: none
-     * post-condition: label is returned
-     */
-    private Label makeBreakdownLabel(String text) {
-        Label label = new Label(text);
-        label.setFont(Font.font("Arial", 14));
-        label.setStyle("-fx-text-fill: #555;");
-        label.setMinWidth(200);
-        return label;
-    }
-
-    /**
-     * This method is making a value label for the breakdown section
-     * @param text the value text like "$150.00"
-     * @return a styled label
-     *
-     * pre-condition: none
-     * post-condition: label is returned
-     */
-    private Label makeBreakdownValue(String text) {
-        Label label = new Label(text);
-        label.setFont(Font.font("Arial", 14));
-        label.setStyle("-fx-text-fill: #333;");
-        return label;
-    }
-
-    /**
-     * This method is making a big colored card for showing total cost
-     * @param title the card title like "Total Monthly Cost"
-     * @param amount the dollar amount text
-     * @param color the accent color
-     * @return a styled HBox card
-     *
-     * pre-condition: none
-     * post-condition: card is returned
-     */
-    private HBox makeTotalCard(String title, String amount, String color) {
-        VBox cardContent = new VBox(5);
-        cardContent.setAlignment(Pos.CENTER);
-
-        Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Arial", 13));
-        titleLabel.setStyle("-fx-text-fill: #666;");
-
-        Label amountLabel = new Label(amount);
-        amountLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        amountLabel.setStyle("-fx-text-fill: " + color + ";");
-
-        cardContent.getChildren().addAll(titleLabel, amountLabel);
-
-        HBox card = new HBox();
-        card.setAlignment(Pos.CENTER);
-        card.setPadding(new Insets(20, 40, 20, 40));
-        card.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 10; " +
-            "-fx-border-color: " + color + "; " +
-            "-fx-border-radius: 10; " +
-            "-fx-border-width: 2;"
-        );
-        card.getChildren().add(cardContent);
-        return card;
-    }
-
-    /**
-     * This method is refreshing the apartment dropdown list
-     * Called when user switch to this tab
-     *
-     * pre-condition: none
-     * post-condition: combo box have the latest apartments
+     * post-condition: combo is updated
      */
     public void refresh() {
-        String previousSelection = apartmentCombo.getValue();
+        String prev = apartmentCombo.getValue();
         apartmentCombo.getItems().clear();
-
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
             String display = apt.getName() + " - $" + String.format("%.0f", apt.getRent()) + "/mo";
             apartmentCombo.getItems().add(display);
         }
-
-        // try to keep the old selection
-        if (previousSelection != null && apartmentCombo.getItems().contains(previousSelection)) {
-            apartmentCombo.setValue(previousSelection);
+        if (prev != null && apartmentCombo.getItems().contains(prev)) {
+            apartmentCombo.setValue(prev);
         }
     }
 
     /**
-     * This method is returning the tab content
-     * @return the scroll pane with all the content
+     * This return the content for this tab
+     * @return ScrollPane content
      *
-     * pre-condition: none
+     * pre-condition: buildTab was called
      * post-condition: content is returned
      */
-    public ScrollPane getContent() {
-        return content;
-    }
+    public ScrollPane getContent() { return content; }
 }
