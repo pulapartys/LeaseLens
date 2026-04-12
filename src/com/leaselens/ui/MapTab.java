@@ -10,7 +10,7 @@ import javafx.scene.paint.*;
 import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 
 /**
  * This is the Map View tab showing apartments on a real map

@@ -9,7 +9,7 @@ import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.NearbyPlace;
 import com.leaselens.model.Status;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 import com.leaselens.datastructures.ApartmentSorter;
 import com.leaselens.datastructures.PlacePriorityQueue;
 import com.leaselens.datastructures.PlaceFilterQueue;

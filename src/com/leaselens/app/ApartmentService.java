@@ -1,4 +1,4 @@
-package com.leaselens.service;
+package com.leaselens.app;
 
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Action;

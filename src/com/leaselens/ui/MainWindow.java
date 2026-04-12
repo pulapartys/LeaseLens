@@ -4,7 +4,7 @@ import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 
 /**
  * This is the main window that hold all the tabs

@@ -7,7 +7,7 @@ import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
 import com.leaselens.model.UserPreferences;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 import com.leaselens.calculators.ScoreCalculator;
 import com.leaselens.datastructures.ApartmentSorter;
 

@@ -6,7 +6,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import com.leaselens.model.UserPreferences;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 
 /**
  * This is the Preferences tab for budget and priority settings

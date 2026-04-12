@@ -8,7 +8,7 @@ import javafx.scene.text.*;
 import javafx.stage.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 
 /**
  * This is the popup dialog for adding or editing an apartment

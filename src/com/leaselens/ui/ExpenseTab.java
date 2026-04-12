@@ -5,7 +5,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import com.leaselens.model.Apartment;
-import com.leaselens.service.ApartmentService;
+import com.leaselens.app.ApartmentService;
 import com.leaselens.datastructures.ExpenseHashMap;
 
 /**
