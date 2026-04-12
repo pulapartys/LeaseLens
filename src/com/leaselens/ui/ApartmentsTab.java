@@ -138,7 +138,7 @@ public class ApartmentsTab {
 
         // search bar
         searchField = new TextField();
-        searchField.setPromptText("Search by name or address...");
+        searchField.setPromptText("Search by neighborhood...");
         searchField.setFont(Font.font("Arial", 13));
         searchField.setMinWidth(250);
         searchField.setStyle(

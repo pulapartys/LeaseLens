@@ -694,6 +694,7 @@ public class AddApartmentDialog {
             Apartment updated = editingApartment.makeCopy();
             updated.setName(street);
             updated.setAddress(address);
+            updated.setNeighborhood(neighborhood);
             updated.setRent(rent);
             updated.setSqft(sqft);
             updated.setBedrooms(bedrooms);
@@ -717,6 +718,7 @@ public class AddApartmentDialog {
         } else {
             // adding new apartment
             Apartment apartment = new Apartment(street, address, rent, sqft, bedrooms, bathrooms);
+            apartment.setNeighborhood(neighborhood);
             apartment.setHasParking(parkingCheck.isSelected());
             apartment.setHasLaundry(laundryCheck.isSelected());
             apartment.setHasDishwasher(dishwasherCheck.isSelected());

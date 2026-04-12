@@ -75,7 +75,7 @@ public class ApartmentService {
     public boolean addApartment(Apartment apartment) {
         // add to all data structures
         allApartments.add(apartment);
-        searchMap.put(apartment.getId(), apartment);
+        searchMap.put(apartment.getNeighborhood(), apartment);
 
         // save action for undo
         Action action = new Action("ADD", null, apartment.makeCopy());
@@ -246,6 +246,7 @@ public class ApartmentService {
         // update the fields
         existing.setName(updated.getName());
         existing.setAddress(updated.getAddress());
+        existing.setNeighborhood(updated.getNeighborhood());
         existing.setRent(updated.getRent());
         existing.setSqft(updated.getSqft());
         existing.setBedrooms(updated.getBedrooms());
@@ -296,7 +297,7 @@ public class ApartmentService {
             // undo delete = add it back
             Apartment apt = action.getBefore();
             allApartments.add(apt);
-            searchMap.put(apt.getId(), apt);
+            searchMap.put(apt.getNeighborhood(), apt);
 
         } else if (action.getType().equals("EDIT") || action.getType().equals("STATUS_CHANGE")) {
             // undo edit = restore the before state
@@ -328,7 +329,7 @@ public class ApartmentService {
         if (action.getType().equals("ADD")) {
             Apartment apt = action.getAfter();
             allApartments.add(apt);
-            searchMap.put(apt.getId(), apt);
+            searchMap.put(apt.getNeighborhood(), apt);
 
         } else if (action.getType().equals("DELETE")) {
             String id = action.getBefore().getId();
@@ -357,6 +358,7 @@ public class ApartmentService {
     private void copyFields(Apartment from, Apartment to) {
         to.setName(from.getName());
         to.setAddress(from.getAddress());
+        to.setNeighborhood(from.getNeighborhood());
         to.setRent(from.getRent());
         to.setSqft(from.getSqft());
         to.setBedrooms(from.getBedrooms());
@@ -381,15 +383,16 @@ public class ApartmentService {
     // ---- SEARCH AND FILTER METHODS ----
 
     /**
-     * This method is searching apartments by text query
-     * @param query the search text
-     * @return list of matching apartments
+     * This method is searching apartments by neighborhood
+     * This is O(1) fast lookup because neighborhood is the hash map key
+     * @param neighborhood the neighborhood to search for
+     * @return list of apartments in that neighborhood
      *
-     * pre-condition: query should not be null
+     * pre-condition: neighborhood should not be null
      * post-condition: list of matches is returned
      */
-    public ArrayList<Apartment> search(String query) {
-        return searchMap.search(query);
+    public ArrayList<Apartment> search(String neighborhood) {
+        return searchMap.search(neighborhood);
     }
 
     /**

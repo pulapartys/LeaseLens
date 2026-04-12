@@ -4,9 +4,12 @@ import com.leaselens.model.Apartment;
 import java.util.ArrayList;
 
 /**
- * This class is a hash map data structure for fast apartment lookups
+ * This class is a hash map data structure for fast apartment lookups by neighborhood
  * It use an array of linked lists (separate chaining) for handling collisions
- * We use this for the search bar and duplicate detection
+ * Key is neighborhood name, value is list of apartments in that neighborhood
+ *
+ * ADT: HashMap
+ * Data Structure: Array + Linked List (Separate Chaining)
  *
  * pre-condition: none
  * post-condition: an empty hash map is created
@@ -15,22 +18,23 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
 
     /**
      * This inner class is one entry in the hash map
-     * It store a key and value pair and point to next entry for chaining
+     * It store neighborhood name and list of apartments in that neighborhood
      */
     private class Entry {
-        String key;
-        Apartment value;
+        String neighborhood;
+        ArrayList<Apartment> apartments;
         Entry next;
 
-        Entry(String key, Apartment value) {
-            this.key = key;
-            this.value = value;
+        Entry(String neighborhood) {
+            this.neighborhood = neighborhood;
+            this.apartments = new ArrayList<Apartment>();
             this.next = null;
         }
     }
+
     // the array of buckets
     private Entry[] table;
-    // how many entries are currently stored
+    // how many neighborhoods we have
     private int size;
     // how many buckets the array has
     private int capacity;
@@ -71,141 +75,160 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
     }
 
     /**
-     * This method is putting a key-value pair into the hash map
-     * If the key already exist it update the value
-     * @param key the string key (like apartment id or name)
-     * @param value the apartment object to store
+     * This method is adding apartment to its neighborhood bucket
+     * If neighborhood not exist it create new entry
+     * If neighborhood exist it add apartment to the list
+     * @param neighborhood the neighborhood name (key)
+     * @param apartment the apartment object to store
      *
-     * pre-condition: key and value should not be null
-     * post-condition: apartment is stored in the hash map
+     * pre-condition: neighborhood and apartment should not be null
+     * post-condition: apartment is added to that neighborhood list
      */
-    public void put(String key, Apartment value) {
-        String lowerKey = key.toLowerCase();
+    public void put(String neighborhood, Apartment apartment) {
+        if (neighborhood == null || neighborhood.isEmpty()) {
+            return;
+        }
+        String lowerKey = neighborhood.toLowerCase();
         int index = hash(lowerKey);
 
-        // check if key already exist in this bucket
+        // check if neighborhood already exist in this bucket
         Entry current = table[index];
         while (current != null) {
-            if (current.key.equals(lowerKey)) {
-                // key already exist, update the value
-                current.value = value;
+            if (current.neighborhood.equals(lowerKey)) {
+                // neighborhood exist, add apartment to list
+                current.apartments.add(apartment);
                 return;
             }
             current = current.next;
         }
 
-        // key not found, add new entry at front of chain
-        Entry newEntry = new Entry(lowerKey, value);
+        // neighborhood not found, add new entry at front of chain
+        Entry newEntry = new Entry(lowerKey);
+        newEntry.apartments.add(apartment);
         newEntry.next = table[index];
         table[index] = newEntry;
         size++;
     }
 
     /**
-     * This method is getting an apartment by its key
-     * @param key the key to look up
-     * @return the apartment if found, null if not found
+     * This method is getting all apartments in a neighborhood
+     * This is O(1) fast lookup because we go straight to the bucket
+     * @param neighborhood the neighborhood to search
+     * @return list of apartments in that neighborhood
      *
-     * pre-condition: key should not be null
-     * post-condition: apartment is returned or null
+     * pre-condition: neighborhood should not be null
+     * post-condition: list of apartments is returned (empty if not found)
      */
-    public Apartment get(String key) {
-        String lowerKey = key.toLowerCase();
+    public ArrayList<Apartment> getByNeighborhood(String neighborhood) {
+        if (neighborhood == null || neighborhood.isEmpty()) {
+            return new ArrayList<Apartment>();
+        }
+        String lowerKey = neighborhood.toLowerCase();
         int index = hash(lowerKey);
 
         Entry current = table[index];
         while (current != null) {
-            if (current.key.equals(lowerKey)) {
-                return current.value;
+            if (current.neighborhood.equals(lowerKey)) {
+                return current.apartments;
             }
             current = current.next;
+        }
+        return new ArrayList<Apartment>();
+    }
+
+    /**
+     * This method is getting single apartment by its id
+     * It need to search all buckets because id is not the key
+     * @param id the apartment id to find
+     * @return the apartment if found, null if not found
+     *
+     * pre-condition: id should not be null
+     * post-condition: apartment is returned or null
+     */
+    public Apartment get(String id) {
+        if (id == null) {
+            return null;
+        }
+        String lowerId = id.toLowerCase();
+
+        // loop through all buckets to find by id
+        for (int i = 0; i < capacity; i++) {
+            Entry current = table[i];
+            while (current != null) {
+                for (int j = 0; j < current.apartments.size(); j++) {
+                    Apartment apt = current.apartments.get(j);
+                    if (apt.getId().toLowerCase().equals(lowerId)) {
+                        return apt;
+                    }
+                }
+                current = current.next;
+            }
         }
         return null;
     }
 
     /**
-     * This method is checking if a key exist in the map
-     * @param key the key to check
-     * @return true if key exist, false if not
+     * This method is checking if a neighborhood exist in the map
+     * @param neighborhood the neighborhood to check
+     * @return true if neighborhood exist, false if not
      *
-     * pre-condition: key should not be null
+     * pre-condition: neighborhood should not be null
      * post-condition: true or false is returned
      */
-    public boolean containsKey(String key) {
-        return get(key) != null;
+    public boolean containsKey(String neighborhood) {
+        return getByNeighborhood(neighborhood).size() > 0;
     }
 
     /**
-     * This method is removing a key-value pair from the map
-     * @param key the key to remove
-     * @return true if removed, false if key not found
+     * This method is removing an apartment by its id
+     * @param id the apartment id to remove
+     * @return true if removed, false if not found
      *
-     * pre-condition: key should not be null
-     * post-condition: entry is removed and size go down by 1
+     * pre-condition: id should not be null
+     * post-condition: apartment is removed from its neighborhood list
      */
-    public boolean remove(String key) {
-        String lowerKey = key.toLowerCase();
-        int index = hash(lowerKey);
+    public boolean remove(String id) {
+        if (id == null) {
+            return false;
+        }
+        String lowerId = id.toLowerCase();
 
-        Entry current = table[index];
-        Entry previous = null;
-
-        while (current != null) {
-            if (current.key.equals(lowerKey)) {
-                if (previous == null) {
-                    // removing first entry in bucket
-                    table[index] = current.next;
-                } else {
-                    // removing middle or last entry
-                    previous.next = current.next;
+        // loop through all buckets to find and remove
+        for (int i = 0; i < capacity; i++) {
+            Entry current = table[i];
+            while (current != null) {
+                for (int j = 0; j < current.apartments.size(); j++) {
+                    Apartment apt = current.apartments.get(j);
+                    if (apt.getId().toLowerCase().equals(lowerId)) {
+                        current.apartments.remove(j);
+                        return true;
+                    }
                 }
-                size--;
-                return true;
+                current = current.next;
             }
-            previous = current;
-            current = current.next;
         }
         return false;
     }
 
     /**
-     * This method is searching for apartments that match a query
-     * It look through all apartments and check if name or address contain the search text
-     * @param query the text to search for
-     * @return list of apartments that match
+     * This method is searching apartments by neighborhood
+     * This is O(1) fast lookup because neighborhood is the key
+     * @param neighborhood the neighborhood to search for
+     * @return list of apartments in that neighborhood
      *
-     * pre-condition: query should not be null
+     * pre-condition: neighborhood should not be null
      * post-condition: list of matching apartments is returned
      */
-    public ArrayList<Apartment> search(String query) {
-        ArrayList<Apartment> results = new ArrayList<Apartment>();
-        String lowerQuery = query.toLowerCase();
-
-        // loop through all buckets
-        for (int i = 0; i < capacity; i++) {
-            Entry current = table[i];
-            while (current != null) {
-                Apartment apt = current.value;
-
-                // check if name or address contain the query
-                String name = apt.getName().toLowerCase();
-                String address = apt.getAddress().toLowerCase();
-
-                if (name.contains(lowerQuery) || address.contains(lowerQuery)) {
-                    results.add(apt);
-                }
-                current = current.next;
-            }
-        }
-        return results;
+    public ArrayList<Apartment> search(String neighborhood) {
+        return getByNeighborhood(neighborhood);
     }
 
     /**
-     * This method is getting all keys in the map
-     * @return list of all key strings
+     * This method is getting all neighborhood names in the map
+     * @return array of all neighborhood strings
      *
      * pre-condition: none
-     * post-condition: list of keys is returned
+     * post-condition: array of keys is returned
      */
     public String[] getAllKeys() {
         String[] keys = new String[size];
@@ -213,7 +236,7 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
         for (int i = 0; i < capacity; i++) {
             Entry current = table[i];
             while (current != null) {
-                keys[index] = current.key;
+                keys[index] = current.neighborhood;
                 index++;
                 current = current.next;
             }
@@ -222,8 +245,8 @@ public class ApartmentHashMap implements HashMapInterface<Apartment> {
     }
 
     /**
-     * This method is telling how many entries is in the map
-     * @return the number of entries
+     * This method is telling how many neighborhoods is in the map
+     * @return the number of neighborhoods
      *
      * pre-condition: none
      * post-condition: size is returned
