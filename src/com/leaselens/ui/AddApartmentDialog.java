@@ -485,6 +485,27 @@ public class AddApartmentDialog {
             updated.setNotes(notesArea.getText().trim());
             updated.setStatus(Status.valueOf(statusCombo.getValue()));
 
+            // if address changed, clear old API data so stale values dont stay
+            if (!updated.getAddress().equals(editingApartment.getAddress())) {
+                updated.setLatitude(0);
+                updated.setLongitude(0);
+                updated.setWalkScore(0);
+                updated.setTransitScore(0);
+                updated.setBikeScore(0);
+                updated.setNearbyFood(0);
+                updated.setNearbyShops(0);
+                updated.setNearbyServices(0);
+                updated.setNearbyTransit(0);
+                updated.setNearbyLeisure(0);
+                updated.setNearbyBike(0);
+                updated.setNearestTStop("");
+                updated.setDistanceToT(0);
+                updated.setSafetyScore(0);
+                updated.setCrimeCount(0);
+                updated.setCrimeBreakdown("");
+                updated.setRecreationCount(0);
+                updated.setNearbyRecreation("");
+            }
             service.enrichWithApiData(updated);
             service.updateApartment(updated);
         } else {
