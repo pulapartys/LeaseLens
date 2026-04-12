@@ -19,7 +19,7 @@ import com.leaselens.datastructures.ApartmentSorter;
 
 /**
  * This class is the Dashboard tab - the home screen of the app
- * It show stats cards, top 3 picks, and budget overview
+ * It show stats cards, top 3 picks using bubble sort, and budget overview
  *
  * pre-condition: service should not be null
  * post-condition: dashboard tab is created with all sections
