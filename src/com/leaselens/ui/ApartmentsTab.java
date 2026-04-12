@@ -162,8 +162,7 @@ public class ApartmentsTab {
         sortLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
 
         sortBy = new ComboBox<String>();
-        sortBy.getItems().addAll("Rent (Low-High)", "Rent (High-Low)",
-                                  "Bedrooms", "Walk Score", "Distance to T");
+        sortBy.getItems().addAll("Rent (Low-High)", "Bedrooms", "Walk Score", "Distance to T");
         sortBy.setValue("Rent (Low-High)");
         sortBy.setMinWidth(160);
 
@@ -618,8 +617,6 @@ public class ApartmentsTab {
 
         if (sortValue.equals("Rent (Low-High)")) {
             ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byRentLowToHigh());
-        } else if (sortValue.equals("Rent (High-Low)")) {
-            ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byRentHighToLow());
         } else if (sortValue.equals("Bedrooms")) {
             ApartmentSorter.mergeSort(sortArray, ApartmentSorter.byBedroomsHighToLow());
         } else if (sortValue.equals("Walk Score")) {

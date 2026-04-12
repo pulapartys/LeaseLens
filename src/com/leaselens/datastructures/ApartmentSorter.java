@@ -132,23 +132,6 @@ public class ApartmentSorter {
     }
 
     /**
-     * This method is giving a comparator to sort by rent high to low
-     * @return comparator that compare apartments by rent descending
-     *
-     * pre-condition: none
-     * post-condition: comparator is returned
-     */
-    public static Comparator<Apartment> byRentHighToLow() {
-        return new Comparator<Apartment>() {
-            public int compare(Apartment a, Apartment b) {
-                if (a.getRent() > b.getRent()) return -1;
-                if (a.getRent() < b.getRent()) return 1;
-                return 0;
-            }
-        };
-    }
-
-    /**
      * This method is giving a comparator to sort by bedrooms high to low
      * @return comparator for bedrooms
      *
