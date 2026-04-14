@@ -198,7 +198,7 @@ public class CompareTab {
         row = addRow(grid, row, "Recreation", apts, wins, false, "rec");
 
         // nearest T stop (no color)
-        addCell(grid, "Nearest T", 0, row, true, "#f5f5f5", "#333");
+        addCell(grid, "Nearest Transit", 0, row, true, "#f5f5f5", "#333");
         for (int i = 0; i < apts.length; i++) {
             String stop = apts[i].getNearestTStop();
             if (stop.isEmpty()) stop = "N/A";
@@ -460,42 +460,50 @@ public class CompareTab {
         combo2.hide();
         combo3.hide();
 
-        // rebuild combo1 - show everything except what combo2 and combo3 picked
-        combo1.getItems().clear();
+        // build new item lists first, then swap all at once with setAll
+        // this avoids the empty list state that makes JavaFX throw IndexOutOfBoundsException
+        java.util.ArrayList<String> list1 = new java.util.ArrayList<String>();
+        java.util.ArrayList<String> list2 = new java.util.ArrayList<String>();
+        java.util.ArrayList<String> list3 = new java.util.ArrayList<String>();
+        list3.add("None");
+
+        // combo1 gets everything except what combo2 and combo3 picked
         for (int i = 0; i < allNames.size(); i++) {
             String name = allNames.get(i);
             boolean taken = false;
             if (name.equals(pick2)) { taken = true; }
             if (name.equals(pick3) && !"None".equals(pick3)) { taken = true; }
             if (taken == false) {
-                combo1.getItems().add(name);
+                list1.add(name);
             }
         }
 
-        // rebuild combo2 - show everything except what combo1 and combo3 picked
-        combo2.getItems().clear();
+        // combo2 gets everything except what combo1 and combo3 picked
         for (int i = 0; i < allNames.size(); i++) {
             String name = allNames.get(i);
             boolean taken = false;
             if (name.equals(pick1)) { taken = true; }
             if (name.equals(pick3) && !"None".equals(pick3)) { taken = true; }
             if (taken == false) {
-                combo2.getItems().add(name);
+                list2.add(name);
             }
         }
 
-        // rebuild combo3 - show "None" plus everything except what combo1 and combo2 picked
-        combo3.getItems().clear();
-        combo3.getItems().add("None");
+        // combo3 gets "None" plus everything except what combo1 and combo2 picked
         for (int i = 0; i < allNames.size(); i++) {
             String name = allNames.get(i);
             boolean taken = false;
             if (name.equals(pick1)) { taken = true; }
             if (name.equals(pick2)) { taken = true; }
             if (taken == false) {
-                combo3.getItems().add(name);
+                list3.add(name);
             }
         }
+
+        // swap all items at once so the list is never empty
+        combo1.getItems().setAll(list1);
+        combo2.getItems().setAll(list2);
+        combo3.getItems().setAll(list3);
 
         // put the saved picks back
         if (pick1 != null && combo1.getItems().contains(pick1)) {
@@ -530,17 +538,21 @@ public class CompareTab {
         combo2.hide();
         combo3.hide();
 
-        combo1.getItems().clear();
-        combo2.getItems().clear();
-        combo3.getItems().clear();
-        combo3.getItems().add("None");
+        // build new lists first then swap all at once so list is never empty
+        java.util.ArrayList<String> names = new java.util.ArrayList<String>();
+        java.util.ArrayList<String> names3 = new java.util.ArrayList<String>();
+        names3.add("None");
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
             String display = apt.getName() + " ($" + String.format("%.0f", apt.getRent()) + ")";
-            combo1.getItems().add(display);
-            combo2.getItems().add(display);
-            combo3.getItems().add(display);
+            names.add(display);
+            names3.add(display);
         }
+
+        // swap all items at once so JavaFX dont throw IndexOutOfBoundsException
+        combo1.getItems().setAll(names);
+        combo2.getItems().setAll(names);
+        combo3.getItems().setAll(names3);
         combo1.setValue(null);
         combo2.setValue(null);
         combo3.setValue("None");
