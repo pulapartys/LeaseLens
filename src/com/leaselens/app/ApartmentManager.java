@@ -288,13 +288,10 @@ public class ApartmentManager {
 
     /**
      * This method check if a status change is allowed
-     * NEW can go to SHORTLISTED or REJECTED
-     * SHORTLISTED can go to TOURED or REJECTED
-     * TOURED can go to SHORTLISTED or REJECTED
-     * REJECTED is final and cant go anywhere
+     * Any status can change to any other status
      * @param current the current status
      * @param next the status user want to change to
-     * @return true if this change is ok, false if not allowed
+     * @return true if this change is ok, false if same status
      *
      * pre-condition: both status should not be null
      * post-condition: return true or false
@@ -304,37 +301,8 @@ public class ApartmentManager {
         if (current == next) {
             return false;
         }
-
-        // REJECTED is final - cant change from rejected
-        if (current == Status.REJECTED) {
-            return false;
-        }
-
-        // NEW can go to SHORTLISTED or REJECTED
-        if (current == Status.NEW) {
-            if (next == Status.SHORTLISTED || next == Status.REJECTED) {
-                return true;
-            }
-            return false;
-        }
-
-        // SHORTLISTED can go to TOURED or REJECTED
-        if (current == Status.SHORTLISTED) {
-            if (next == Status.TOURED || next == Status.REJECTED) {
-                return true;
-            }
-            return false;
-        }
-
-        // TOURED can go to SHORTLISTED or REJECTED
-        if (current == Status.TOURED) {
-            if (next == Status.SHORTLISTED || next == Status.REJECTED) {
-                return true;
-            }
-            return false;
-        }
-
-        return false;
+        // allow any status change
+        return true;
     }
 
     /**
