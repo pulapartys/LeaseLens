@@ -1128,29 +1128,37 @@ public class ApartmentsTab {
         Thread fetchThread = new Thread(new Runnable() {
             public void run() {
                 try {
-                    String query = "[out:json][timeout:15];"
+                    String query = "[out:json][timeout:10];"
                         + "(node[\"amenity\"](around:500," + lat + "," + lon + ");"
                         + "node[\"shop\"](around:500," + lat + "," + lon + ");"
                         + "node[\"leisure\"](around:500," + lat + "," + lon + "););"
                         + "out body;";
-                    String encoded = java.net.URLEncoder.encode(query, "UTF-8");
 
-                    java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-                    String[] servers = { com.leaselens.api.ApiConfig.OVERPASS_BASE_URL, com.leaselens.api.ApiConfig.OVERPASS_BACKUP_URL };
+                    java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                        .connectTimeout(java.time.Duration.ofSeconds(8))
+                        .build();
+                    String[] servers = {
+                        com.leaselens.api.ApiConfig.OVERPASS_BASE_URL,
+                        com.leaselens.api.ApiConfig.OVERPASS_BACKUP_URL,
+                        "https://overpass.private.coffee/api/interpreter"
+                    };
                     String responseBody = null;
 
                     for (int s = 0; s < servers.length; s++) {
-                        String url = servers[s] + "?data=" + encoded;
                         System.out.println("Trying Overpass server: " + servers[s]);
                         java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
-                            .uri(java.net.URI.create(url))
+                            .uri(java.net.URI.create(servers[s]))
+                            .timeout(java.time.Duration.ofSeconds(12))
                             .header("User-Agent", "LeaseLens/1.0 StudentProject")
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                            .POST(java.net.http.HttpRequest.BodyPublishers.ofString("data=" + java.net.URLEncoder.encode(query, "UTF-8")))
                             .build();
                         try {
                             java.net.http.HttpResponse<String> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
                             String body = resp.body().trim();
-                            if (body.startsWith("{")) { responseBody = body; break; }
-                            else System.out.println("Overpass returned non-JSON, trying next...");
+                            System.out.println("Overpass response status: " + resp.statusCode());
+                            if (resp.statusCode() == 200 && body.startsWith("{")) { responseBody = body; break; }
+                            else System.out.println("Overpass returned non-JSON (status " + resp.statusCode() + "), trying next...");
                         } catch (Exception err) { System.out.println("Overpass error: " + err.getMessage()); }
                     }
 
