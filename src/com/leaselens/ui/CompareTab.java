@@ -455,6 +455,11 @@ public class CompareTab {
             allNames.add(display);
         }
 
+        // close dropdowns first so JavaFX dont crash
+        combo1.hide();
+        combo2.hide();
+        combo3.hide();
+
         // rebuild combo1 - show everything except what combo2 and combo3 picked
         combo1.getItems().clear();
         for (int i = 0; i < allNames.size(); i++) {
@@ -519,6 +524,11 @@ public class CompareTab {
     public void refresh() {
         // turn on flag so updateComboChoices does not run during refresh
         isRefreshing = true;
+
+        // close dropdowns first so JavaFX dont crash
+        combo1.hide();
+        combo2.hide();
+        combo3.hide();
 
         combo1.getItems().clear();
         combo2.getItems().clear();

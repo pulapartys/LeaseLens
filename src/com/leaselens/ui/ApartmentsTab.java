@@ -27,8 +27,6 @@ public class ApartmentsTab {
 
     private ApartmentManager service;
     private VBox content;
-    private MapTab mapTab;
-    private Runnable switchToMapTab;
     private TableView<Apartment> table;
     private ObservableList<Apartment> tableData;
     private TextField searchField;
@@ -1263,18 +1261,6 @@ public class ApartmentsTab {
         return R * c;
     }
 
-    /**
-     * This set the map navigator for viewing on map
-     * @param mapTab the map tab
-     * @param switchToMap runnable to switch to map tab
-     *
-     * pre-condition: none
-     * post-condition: map navigator is set
-     */
-    public void setMapNavigator(MapTab mapTab, Runnable switchToMap) {
-        this.mapTab = mapTab;
-        this.switchToMapTab = switchToMap;
-    }
 
     /**
      * This refresh the table data
