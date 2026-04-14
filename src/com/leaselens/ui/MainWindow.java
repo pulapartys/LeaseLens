@@ -64,12 +64,14 @@ public class MainWindow {
         tabPane.getTabs().addAll(tab1, tab2, tab3, tab4, tab5);
 
         // refresh when user switch tab
-        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            String name = newTab.getText();
-            if (name.equals("Dashboard")) dashboardTab.refresh();
-            else if (name.equals("My Apartments")) apartmentsTab.refresh();
-            else if (name.equals("Compare")) compareTab.refresh();
-            else if (name.equals("Expenses")) expenseTab.refresh();
+        tabPane.getSelectionModel().selectedItemProperty().addListener(new javafx.beans.value.ChangeListener<Tab>() {
+            public void changed(javafx.beans.value.ObservableValue<? extends Tab> obs, Tab oldTab, Tab newTab) {
+                String name = newTab.getText();
+                if (name.equals("Dashboard")) dashboardTab.refresh();
+                else if (name.equals("My Apartments")) apartmentsTab.refresh();
+                else if (name.equals("Compare")) compareTab.refresh();
+                else if (name.equals("Expenses")) expenseTab.refresh();
+            }
         });
 
         BorderPane root = new BorderPane();

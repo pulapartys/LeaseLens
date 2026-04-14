@@ -62,6 +62,7 @@ public class MBTAService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,
@@ -121,6 +122,7 @@ public class MBTAService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,
@@ -230,6 +232,7 @@ public class MBTAService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,
@@ -314,6 +317,7 @@ public class MBTAService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,

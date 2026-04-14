@@ -136,6 +136,7 @@ public class GeocodingService {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "LeaseLens-StudentProject")
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,
@@ -173,6 +174,7 @@ public class GeocodingService {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "LeaseLens-StudentProject")
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,

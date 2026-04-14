@@ -9,6 +9,7 @@ import javafx.stage.*;
 import com.leaselens.model.Apartment;
 import com.leaselens.model.Status;
 import com.leaselens.app.ApartmentManager;
+import java.util.ArrayList;
 
 /**
  * This is the popup dialog for adding or editing an apartment
@@ -284,11 +285,19 @@ public class AddApartmentDialog {
         Button cancelBtn = new Button("Cancel");
         cancelBtn.setPrefWidth(100);
         cancelBtn.setStyle("-fx-background-color: #e0e0e0;");
-        cancelBtn.setOnAction(e -> dialogStage.close());
+        cancelBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                dialogStage.close();
+            }
+        });
         Button saveBtn = new Button("Save Apartment");
         saveBtn.setPrefWidth(150);
         saveBtn.setStyle("-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;");
-        saveBtn.setOnAction(e -> handleSave());
+        saveBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                handleSave();
+            }
+        });
 
         HBox btnRow = new HBox(15);
         btnRow.setAlignment(Pos.CENTER_RIGHT);
@@ -398,6 +407,7 @@ public class AddApartmentDialog {
 
     /**
      * This handle the save button click and validate all fields
+     * It check all errors at once so user can fix everything in one go
      *
      * pre-condition: form fields exist
      * post-condition: apartment is saved if valid
@@ -410,45 +420,98 @@ public class AddApartmentDialog {
         String neighborhood = neighborhoodField.getText().trim();
         String rentText = rentField.getText().trim();
         String sqftText = sqftField.getText().trim();
+        String zip = zipField.getText().trim();
 
-        // validate
+        // collect all errors instead of stopping at first one
+        ArrayList<String> errors = new ArrayList<String>();
+
+        // check street address
         if (street.isEmpty() || street.length() < 5) {
-            showError("Street address is required (at least 5 characters).");
-            return;
+            errors.add("Street address is required (at least 5 characters).");
         }
+
+        // check city
         if (city.isEmpty() || city.length() < 2) {
-            showError("City is required.");
-            return;
+            errors.add("City is required (at least 2 characters).");
         }
+
+        // check neighborhood
         if (neighborhood.isEmpty() || neighborhood.length() < 2) {
-            showError("Neighborhood is required.");
+            errors.add("Neighborhood is required (at least 2 characters).");
+        }
+
+        // check rent
+        double rent = 0;
+        boolean rentOk = false;
+        if (rentText.isEmpty()) {
+            errors.add("Monthly rent is required.");
+        } else {
+            try {
+                rent = Double.parseDouble(rentText);
+                rentOk = true;
+            } catch (Exception e) {
+                errors.add("Rent must be a number.");
+            }
+        }
+        if (rentOk == true && (rent < 1000 || rent > 50000)) {
+            errors.add("Rent must be between $1,000 and $50,000.");
+        }
+
+        // check sqft if user typed something
+        double sqft = 0;
+        boolean sqftOk = false;
+        if (!sqftText.isEmpty()) {
+            try {
+                sqft = Double.parseDouble(sqftText);
+                sqftOk = true;
+            } catch (Exception e) {
+                errors.add("Size (sqft) must be a number.");
+            }
+        }
+        if (sqftOk == true && sqft <= 0) {
+            errors.add("Size (sqft) must be greater than 0.");
+        }
+
+        // check zip code if user typed something
+        if (!zip.isEmpty()) {
+            if (zip.length() != 5) {
+                errors.add("Zip code must be exactly 5 digits (e.g. 02134).");
+            } else {
+                // check every letter is a number
+                boolean allDigits = true;
+                for (int i = 0; i < zip.length(); i++) {
+                    char c = zip.charAt(i);
+                    if (c < '0' || c > '9') {
+                        allDigits = false;
+                    }
+                }
+                if (allDigits == false) {
+                    errors.add("Zip code must be only numbers (e.g. 02134).");
+                }
+            }
+        }
+
+        // if there is any errors, show them all at once
+        if (errors.size() > 0) {
+            String allErrors = "";
+            for (int i = 0; i < errors.size(); i++) {
+                if (i > 0) {
+                    allErrors = allErrors + "\n";
+                }
+                allErrors = allErrors + "- " + errors.get(i);
+            }
+            showError(allErrors);
             return;
         }
 
+        // all good, now capitalize and build address
         street = capitalizeWords(street);
         neighborhood = capitalizeWords(neighborhood);
         city = capitalizeWords(city);
 
-        String zip = zipField.getText().trim();
         String address = street + ", " + neighborhood + ", " + city + ", " + stateCombo.getValue();
-        if (!zip.isEmpty()) address = address + " " + zip;
-
-        if (rentText.isEmpty()) {
-            showError("Rent is required.");
-            return;
-        }
-        double rent = 0;
-        try { rent = Double.parseDouble(rentText); }
-        catch (Exception e) { showError("Rent must be a number."); return; }
-        if (rent <= 0 || rent > 50000) {
-            showError("Rent must be between $1 and $50,000.");
-            return;
-        }
-
-        double sqft = 0;
-        if (!sqftText.isEmpty()) {
-            try { sqft = Double.parseDouble(sqftText); }
-            catch (Exception e) { showError("Size must be a number."); return; }
+        if (!zip.isEmpty()) {
+            address = address + " " + zip;
         }
 
         int bedrooms = readBedrooms();
@@ -459,7 +522,9 @@ public class AddApartmentDialog {
             dateText = availableDatePicker.getValue().toString();
         }
 
-        // save
+        // save the apartment and get API warnings
+        String apiWarnings = "";
+
         if (editingApartment != null) {
             // editing existing apartment
             Apartment updated = editingApartment.makeCopy();
@@ -489,24 +554,24 @@ public class AddApartmentDialog {
             if (!updated.getAddress().equals(editingApartment.getAddress())) {
                 updated.setLatitude(0);
                 updated.setLongitude(0);
-                updated.setWalkScore(0);
-                updated.setTransitScore(0);
-                updated.setBikeScore(0);
-                updated.setNearbyFood(0);
-                updated.setNearbyShops(0);
-                updated.setNearbyServices(0);
-                updated.setNearbyTransit(0);
-                updated.setNearbyLeisure(0);
-                updated.setNearbyBike(0);
+                updated.setWalkScore(-1);
+                updated.setTransitScore(-1);
+                updated.setBikeScore(-1);
+                updated.setNearbyFood(-1);
+                updated.setNearbyShops(-1);
+                updated.setNearbyServices(-1);
+                updated.setNearbyTransit(-1);
+                updated.setNearbyLeisure(-1);
+                updated.setNearbyBike(-1);
                 updated.setNearestTStop("");
-                updated.setDistanceToT(0);
-                updated.setSafetyScore(0);
-                updated.setCrimeCount(0);
+                updated.setDistanceToT(-1);
+                updated.setSafetyScore(-1);
+                updated.setCrimeCount(-1);
                 updated.setCrimeBreakdown("");
-                updated.setRecreationCount(0);
+                updated.setRecreationCount(-1);
                 updated.setNearbyRecreation("");
             }
-            service.enrichWithApiData(updated);
+            apiWarnings = service.enrichWithApiData(updated);
             service.updateApartment(updated);
         } else {
             // adding new apartment
@@ -527,12 +592,142 @@ public class AddApartmentDialog {
             apartment.setNotes(notesArea.getText().trim());
             apartment.setStatus(Status.valueOf(statusCombo.getValue()));
 
-            // try to get API data in background
-            service.enrichWithApiData(apartment);
+            // try to get API data
+            apiWarnings = service.enrichWithApiData(apartment);
             service.addApartment(apartment);
         }
+
         saved = true;
         dialogStage.close();
+
+        // if any API had problems, show a warning popup
+        // check if geocoding failed (address not found) or just other APIs failed
+        if (apiWarnings.length() > 0) {
+            boolean addressBad = apiWarnings.startsWith("Could not find this address");
+            if (addressBad) {
+                showAddressNotFoundPopup(apiWarnings);
+            } else {
+                showApiWarningPopup(apiWarnings);
+            }
+        }
+    }
+
+    /**
+     * This show a popup when address was found but some APIs had trouble
+     * Like walk score or crime data or transit was down
+     * The apartment is saved and address is good, just some extra data missing
+     * @param warnings the warning messages from APIs
+     *
+     * pre-condition: warnings not empty, geocoding was ok
+     * post-condition: yellow popup is shown
+     */
+    private void showApiWarningPopup(String warnings) {
+        Stage warningStage = new Stage();
+        warningStage.setTitle("Heads Up - Some Data Unavailable");
+        warningStage.initModality(Modality.APPLICATION_MODAL);
+
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(20));
+        box.setStyle("-fx-background-color: #fff8e1;");
+
+        Label headerLabel = new Label("Apartment saved, but some data is missing");
+        headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        headerLabel.setStyle("-fx-text-fill: #e65100;");
+
+        Label subLabel = new Label("Your address was found on the map, "
+            + "but we had trouble getting some extra data:");
+        subLabel.setFont(Font.font("Arial", 13));
+        subLabel.setWrapText(true);
+        subLabel.setStyle("-fx-text-fill: #555;");
+
+        Label warnLabel = new Label(warnings);
+        warnLabel.setWrapText(true);
+        warnLabel.setFont(Font.font("Arial", 12));
+        warnLabel.setStyle("-fx-text-fill: #c62828;");
+
+        Label tipLabel = new Label("Tip: You can edit the apartment later to retry. "
+            + "If problem keeps happening, the service might be temporarily down.");
+        tipLabel.setWrapText(true);
+        tipLabel.setFont(Font.font("Arial", 12));
+        tipLabel.setStyle("-fx-text-fill: #666;");
+
+        Button okBtn = new Button("Got It");
+        okBtn.setStyle("-fx-background-color: #e65100; -fx-text-fill: white; -fx-font-weight: bold;");
+        okBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                warningStage.close();
+            }
+        });
+
+        box.getChildren().addAll(headerLabel, subLabel, warnLabel, tipLabel, okBtn);
+
+        ScrollPane sp = new ScrollPane(box);
+        sp.setFitToWidth(true);
+        sp.setStyle("-fx-background-color: #fff8e1;");
+        warningStage.setScene(new Scene(sp, 500, 300));
+        warningStage.show();
+    }
+
+    /**
+     * This show a serious popup when address could not be found on the map
+     * It tell user the apartment is saved but address is probably wrong
+     * No walk score, crime, transit, or parks data is available
+     * @param warnings the warning message from geocoding failure
+     *
+     * pre-condition: warnings not empty, geocoding failed
+     * post-condition: red popup is shown telling user to fix address
+     */
+    private void showAddressNotFoundPopup(String warnings) {
+        Stage warningStage = new Stage();
+        warningStage.setTitle("Address Not Found");
+        warningStage.initModality(Modality.APPLICATION_MODAL);
+
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(20));
+        box.setStyle("-fx-background-color: #fce4ec;");
+
+        Label headerLabel = new Label("Warning: Address Could Not Be Found");
+        headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        headerLabel.setStyle("-fx-text-fill: #c62828;");
+
+        Label subLabel = new Label("Your apartment was saved, but the address "
+            + "could not be located on the map. This means NO extra data "
+            + "(Walk Score, Crime, Transit, Parks) is available.");
+        subLabel.setFont(Font.font("Arial", 13));
+        subLabel.setWrapText(true);
+        subLabel.setStyle("-fx-text-fill: #555;");
+
+        Label reasonLabel = new Label("This can happen if:\n"
+            + "  - The street address has a typo\n"
+            + "  - The city or zip code is wrong\n"
+            + "  - The address is too new to be in the map database\n"
+            + "  - Your internet connection is down");
+        reasonLabel.setFont(Font.font("Arial", 12));
+        reasonLabel.setWrapText(true);
+        reasonLabel.setStyle("-fx-text-fill: #555;");
+
+        Label fixLabel = new Label("What to do: Edit the apartment, "
+            + "double-check the address, and save again. "
+            + "The system will try to find it again.");
+        fixLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        fixLabel.setWrapText(true);
+        fixLabel.setStyle("-fx-text-fill: #c62828;");
+
+        Button okBtn = new Button("OK, I Will Check");
+        okBtn.setStyle("-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold;");
+        okBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                warningStage.close();
+            }
+        });
+
+        box.getChildren().addAll(headerLabel, subLabel, reasonLabel, fixLabel, okBtn);
+
+        ScrollPane sp = new ScrollPane(box);
+        sp.setFitToWidth(true);
+        sp.setStyle("-fx-background-color: #fce4ec;");
+        warningStage.setScene(new Scene(sp, 500, 350));
+        warningStage.show();
     }
 
     /**

@@ -82,6 +82,7 @@ public class WalkScoreService {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "LeaseLens/1.0 StudentProject INFO6205")
+                .timeout(java.time.Duration.ofSeconds(15))
                 .build();
 
             HttpResponse<String> response = client.send(request,

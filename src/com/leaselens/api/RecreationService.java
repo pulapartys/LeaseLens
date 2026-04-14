@@ -43,6 +43,7 @@ public class RecreationService {
                 .uri(URI.create(url))
                 .header("User-Agent", "LeaseLens/1.0 StudentProject")
                 .header("accept", "application/json")
+                .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
             HttpResponse<String> response = client.send(request,

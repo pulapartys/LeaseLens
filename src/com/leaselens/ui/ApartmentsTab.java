@@ -160,26 +160,123 @@ public class ApartmentsTab {
         viewRow.getChildren().addAll(viewCrimeBtn, viewTransitBtn, viewNearbyBtn, viewMapBtn, viewParksBtn);
 
         // event handlers
-        addBtn.setOnAction(e -> { AddApartmentDialog d = new AddApartmentDialog(service); d.showAdd(); if (d.isSaved()) refresh(); });
-        editBtn.setOnAction(e -> { Apartment sel = getSelected(); if (sel != null) { AddApartmentDialog d = new AddApartmentDialog(service); d.showEdit(sel); if (d.isSaved()) refresh(); } });
-        deleteBtn.setOnAction(e -> { Apartment sel = getSelected(); if (sel != null) { service.removeApartment(sel.getId()); refresh(); } });
-        shortlistBtn.setOnAction(e -> changeStatus(Status.SHORTLISTED));
-        touredBtn.setOnAction(e -> changeStatus(Status.TOURED));
-        rejectBtn.setOnAction(e -> changeStatus(Status.REJECTED));
-        undoBtn.setOnAction(e -> { service.undo(); refresh(); });
-        redoBtn.setOnAction(e -> { service.redo(); refresh(); });
-        searchField.textProperty().addListener((obs, o, n) -> applyFilters());
-        statusFilter.setOnAction(e -> applyFilters());
-        sortBy.setOnAction(e -> applyFilters());
-        minPriceSlider.valueProperty().addListener((obs, o, n) -> updatePriceLabel());
-        maxPriceSlider.valueProperty().addListener((obs, o, n) -> updatePriceLabel());
-        applyPriceBtn.setOnAction(e -> applyFilters());
+        addBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                AddApartmentDialog d = new AddApartmentDialog(service);
+                d.showAdd();
+                if (d.isSaved()) { refresh(); }
+            }
+        });
+        editBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment sel = getSelected();
+                if (sel != null) {
+                    AddApartmentDialog d = new AddApartmentDialog(service);
+                    d.showEdit(sel);
+                    if (d.isSaved()) { refresh(); }
+                }
+            }
+        });
+        deleteBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment sel = getSelected();
+                if (sel != null) { service.removeApartment(sel.getId()); refresh(); }
+            }
+        });
+        shortlistBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { changeStatus(Status.SHORTLISTED); }
+        });
+        touredBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { changeStatus(Status.TOURED); }
+        });
+        rejectBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { changeStatus(Status.REJECTED); }
+        });
+        undoBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { service.undo(); refresh(); }
+        });
+        redoBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { service.redo(); refresh(); }
+        });
+        // search filter listener
+        searchField.textProperty().addListener(new javafx.beans.value.ChangeListener<String>() {
+            public void changed(javafx.beans.value.ObservableValue<? extends String> obs, String o, String n) {
+                applyFilters();
+            }
+        });
+        statusFilter.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilters(); }
+        });
+        sortBy.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilters(); }
+        });
 
-        viewCrimeBtn.setOnAction(e -> { Apartment s = getSelected(); if (s != null) showCrimeData(s); });
-        viewTransitBtn.setOnAction(e -> { Apartment s = getSelected(); if (s != null) showTransitData(s); });
-        viewMapBtn.setOnAction(e -> { Apartment s = getSelected(); if (s != null && (s.getLatitude() != 0 || s.getLongitude() != 0)) showMiniMap(s); });
-        viewNearbyBtn.setOnAction(e -> { Apartment s = getSelected(); if (s != null && (s.getLatitude() != 0 || s.getLongitude() != 0)) showNearbyPlaces(s); });
-        viewParksBtn.setOnAction(e -> { Apartment s = getSelected(); if (s != null) showRecreationData(s); });
+        // price slider listeners that keep min below max
+        minPriceSlider.valueProperty().addListener(new javafx.beans.value.ChangeListener<Number>() {
+            public void changed(javafx.beans.value.ObservableValue<? extends Number> obs, Number o, Number n) {
+                // if min goes above max, push max up to match
+                if (minPriceSlider.getValue() > maxPriceSlider.getValue()) {
+                    maxPriceSlider.setValue(minPriceSlider.getValue());
+                }
+                updatePriceLabel();
+            }
+        });
+        maxPriceSlider.valueProperty().addListener(new javafx.beans.value.ChangeListener<Number>() {
+            public void changed(javafx.beans.value.ObservableValue<? extends Number> obs, Number o, Number n) {
+                // if max goes below min, push min down to match
+                if (maxPriceSlider.getValue() < minPriceSlider.getValue()) {
+                    minPriceSlider.setValue(maxPriceSlider.getValue());
+                }
+                updatePriceLabel();
+            }
+        });
+        applyPriceBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilters(); }
+        });
+
+        // view buttons with friendly messages when data is not available
+        viewCrimeBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment s = getSelected();
+                if (s != null) { showCrimeData(s); }
+            }
+        });
+        viewTransitBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment s = getSelected();
+                if (s != null) { showTransitData(s); }
+            }
+        });
+        viewMapBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment s = getSelected();
+                if (s != null) {
+                    if (s.getLatitude() == 0 && s.getLongitude() == 0) {
+                        showNoLocationAlert(s, "View on Map");
+                    } else {
+                        showMiniMap(s);
+                    }
+                }
+            }
+        });
+        viewNearbyBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment s = getSelected();
+                if (s != null) {
+                    if (s.getLatitude() == 0 && s.getLongitude() == 0) {
+                        showNoLocationAlert(s, "Nearby Places");
+                    } else {
+                        showNearbyPlaces(s);
+                    }
+                }
+            }
+        });
+        viewParksBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                Apartment s = getSelected();
+                if (s != null) { showRecreationData(s); }
+            }
+        });
 
         content.getChildren().addAll(headerRow, filterRow, priceRow, table,
             actionHint, actionRow, viewHint, viewRow);
@@ -199,14 +296,111 @@ public class ApartmentsTab {
 
     /**
      * This change the status of selected apartment
+     * It show a friendly message if the status change is not allowed
      * @param status the new status
      *
      * pre-condition: none
-     * post-condition: status is changed if apartment selected
+     * post-condition: status is changed if apartment selected and allowed
      */
     private void changeStatus(Status status) {
         Apartment sel = getSelected();
-        if (sel != null) { service.changeStatus(sel.getId(), status); refresh(); }
+        if (sel == null) {
+            return;
+        }
+
+        // try to change status
+        boolean changed = service.changeStatus(sel.getId(), status);
+        if (changed == true) {
+            refresh();
+        } else {
+            // status change was not allowed, show friendly message
+            showStatusAlert(sel, status);
+        }
+    }
+
+    /**
+     * This show a popup when a status change is not allowed
+     * It tell the user what transitions they can make from current status
+     * @param apt the apartment
+     * @param triedStatus the status user tried to change to
+     *
+     * pre-condition: apt not null
+     * post-condition: popup is shown
+     */
+    private void showStatusAlert(Apartment apt, Status triedStatus) {
+        javafx.stage.Stage stage = new javafx.stage.Stage();
+        stage.setTitle("Status Change Not Allowed");
+
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(20));
+        box.setStyle("-fx-background-color: #fff3e0;");
+
+        Label headerLbl = new Label("Cannot Change Status");
+        headerLbl.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        headerLbl.setStyle("-fx-text-fill: #e65100;");
+
+        Label msgLbl = new Label("You tried to change \"" + apt.getName()
+            + "\" from " + apt.getStatus() + " to " + triedStatus + ".\n\n"
+            + "This transition is not allowed.\n\n"
+            + service.getAllowedStatusMessage(apt.getStatus()));
+        msgLbl.setWrapText(true);
+        msgLbl.setFont(Font.font("Arial", 13));
+
+        Button okBtn = new Button("OK, Got It");
+        okBtn.setStyle("-fx-background-color: #e65100; -fx-text-fill: white; -fx-font-weight: bold;");
+        okBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                stage.close();
+            }
+        });
+
+        box.getChildren().addAll(headerLbl, msgLbl, okBtn);
+        stage.setScene(new javafx.scene.Scene(box, 420, 220));
+        stage.show();
+    }
+
+    /**
+     * This show a popup when location data is not available
+     * It tell user the address could not be found and what to do
+     * @param apt the apartment
+     * @param feature the feature that need location like "Map" or "Nearby Places"
+     *
+     * pre-condition: apt not null
+     * post-condition: popup is shown
+     */
+    private void showNoLocationAlert(Apartment apt, String feature) {
+        javafx.stage.Stage stage = new javafx.stage.Stage();
+        stage.setTitle("Location Not Available");
+
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(20));
+        box.setStyle("-fx-background-color: #fce4ec;");
+
+        Label headerLbl = new Label("Location Data Unavailable");
+        headerLbl.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        headerLbl.setStyle("-fx-text-fill: #c62828;");
+
+        Label msgLbl = new Label("Cannot show " + feature + " for \"" + apt.getName()
+            + "\" because the address could not be found on the map.\n\n"
+            + "This can happen if:\n"
+            + "  - The street address has a typo\n"
+            + "  - The address is too new to be in the map database\n"
+            + "  - The geocoding service was temporarily unavailable\n\n"
+            + "Try editing the apartment to fix the address, and the system will try to find it again.");
+        msgLbl.setWrapText(true);
+        msgLbl.setFont(Font.font("Arial", 13));
+
+        Button okBtn = new Button("OK");
+        okBtn.setStyle("-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold;");
+        okBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                stage.close();
+            }
+        });
+
+        box.getChildren().addAll(headerLbl, msgLbl, okBtn);
+        stage.setScene(new javafx.scene.Scene(box, 450, 280));
+        stage.show();
     }
 
     /**
@@ -270,15 +464,19 @@ public class ApartmentsTab {
         TableColumn<Apartment, Status> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setMinWidth(90);
-        statusCol.setCellFactory(col -> new TableCell<Apartment, Status>() {
-            protected void updateItem(Status item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); setStyle(""); return; }
-                setText(item.toString());
-                if (item == Status.SHORTLISTED) setStyle("-fx-text-fill: #2e7d32; -fx-font-weight: bold;");
-                else if (item == Status.TOURED) setStyle("-fx-text-fill: #0277bd; -fx-font-weight: bold;");
-                else if (item == Status.REJECTED) setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
-                else setStyle("-fx-text-fill: #e65100;");
+        statusCol.setCellFactory(new javafx.util.Callback<TableColumn<Apartment, Status>, TableCell<Apartment, Status>>() {
+            public TableCell<Apartment, Status> call(TableColumn<Apartment, Status> col) {
+                return new TableCell<Apartment, Status>() {
+                    protected void updateItem(Status item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) { setText(null); setStyle(""); return; }
+                        setText(item.toString());
+                        if (item == Status.SHORTLISTED) setStyle("-fx-text-fill: #2e7d32; -fx-font-weight: bold;");
+                        else if (item == Status.TOURED) setStyle("-fx-text-fill: #0277bd; -fx-font-weight: bold;");
+                        else if (item == Status.REJECTED) setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+                        else setStyle("-fx-text-fill: #e65100;");
+                    }
+                };
             }
         });
 
@@ -413,7 +611,11 @@ public class ApartmentsTab {
 
         Button closeBtn = new Button("Close");
         closeBtn.setStyle("-fx-background-color: #e0e0e0;");
-        closeBtn.setOnAction(e -> stage.close());
+        closeBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                stage.close();
+            }
+        });
         box.getChildren().add(closeBtn);
 
         ScrollPane sp = new ScrollPane(box);
@@ -471,7 +673,11 @@ public class ApartmentsTab {
 
         Button closeBtn = new Button("Close");
         closeBtn.setStyle("-fx-background-color: #e0e0e0;");
-        closeBtn.setOnAction(e -> stage.close());
+        closeBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                stage.close();
+            }
+        });
         box.getChildren().add(closeBtn);
 
         ScrollPane sp = new ScrollPane(box);
@@ -561,7 +767,11 @@ public class ApartmentsTab {
 
         Button closeBtn = new Button("Close");
         closeBtn.setStyle("-fx-background-color: #e0e0e0;");
-        closeBtn.setOnAction(e -> stage.close());
+        closeBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                stage.close();
+            }
+        });
         box.getChildren().add(closeBtn);
 
         ScrollPane sp = new ScrollPane(box);
@@ -636,12 +846,16 @@ public class ApartmentsTab {
                         final double savedPinX = pinX;
                         final double savedPinY = pinY;
 
-                        tile.progressProperty().addListener((obs, ov, nv) -> {
-                            if (nv.doubleValue() >= 1.0 && !tile.isError()) {
-                                javafx.application.Platform.runLater(() -> {
-                                    gc.drawImage(tile, fpx, fpy, tileSize, tileSize);
-                                    drawPin(gc, savedPinX, savedPinY, apt.getName());
-                                });
+                        tile.progressProperty().addListener(new javafx.beans.value.ChangeListener<Number>() {
+                            public void changed(javafx.beans.value.ObservableValue<? extends Number> obs, Number ov, Number nv) {
+                                if (nv.doubleValue() >= 1.0 && !tile.isError()) {
+                                    javafx.application.Platform.runLater(new Runnable() {
+                                        public void run() {
+                                            gc.drawImage(tile, fpx, fpy, tileSize, tileSize);
+                                            drawPin(gc, savedPinX, savedPinY, apt.getName());
+                                        }
+                                    });
+                                }
                             }
                         });
                         if (tile.getProgress() >= 1.0 && !tile.isError()) {
@@ -656,11 +870,23 @@ public class ApartmentsTab {
         drawMap.run();
 
         Button zoomIn = new Button("+");
-        zoomIn.setOnAction(e -> { if (currentZoom[0] < 19) { currentZoom[0]++; drawMap.run(); } });
+        zoomIn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                if (currentZoom[0] < 19) { currentZoom[0]++; drawMap.run(); }
+            }
+        });
         Button zoomOut = new Button("-");
-        zoomOut.setOnAction(e -> { if (currentZoom[0] > 5) { currentZoom[0]--; drawMap.run(); } });
+        zoomOut.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                if (currentZoom[0] > 5) { currentZoom[0]--; drawMap.run(); }
+            }
+        });
         Button resetBtn = new Button("Reset");
-        resetBtn.setOnAction(e -> { currentZoom[0] = 16; cLat[0] = lat; cLon[0] = lon; drawMap.run(); });
+        resetBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                currentZoom[0] = 16; cLat[0] = lat; cLon[0] = lon; drawMap.run();
+            }
+        });
 
         VBox zoomBtns = new VBox(3);
         zoomBtns.getChildren().addAll(zoomIn, zoomOut, resetBtn);
@@ -848,39 +1074,57 @@ public class ApartmentsTab {
         };
 
         // search handlers
-        placeSearch.setOnAction(e -> {
-            String text = placeSearch.getText().trim();
-            if (!text.isEmpty()) {
-                searchHistory.addLast(text);
-                historyLabel.setText("Searches: " + searchHistory.size() + " | Last: \"" + searchHistory.peekLast() + "\" (Deque)");
-            }
-            applyFilter.run();
-        });
-        placeSearch.textProperty().addListener((obs, o, n) -> applyFilter.run());
-
-        undoBtn.setOnAction(e -> {
-            if (!searchHistory.isEmpty()) {
-                searchHistory.removeLast();
-                if (!searchHistory.isEmpty()) {
-                    placeSearch.setText(searchHistory.peekLast());
+        placeSearch.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                String text = placeSearch.getText().trim();
+                if (!text.isEmpty()) {
+                    searchHistory.addLast(text);
                     historyLabel.setText("Searches: " + searchHistory.size() + " | Last: \"" + searchHistory.peekLast() + "\" (Deque)");
-                } else {
-                    placeSearch.setText("");
-                    historyLabel.setText("Search history: empty (Deque)");
+                }
+                applyFilter.run();
+            }
+        });
+        placeSearch.textProperty().addListener(new javafx.beans.value.ChangeListener<String>() {
+            public void changed(javafx.beans.value.ObservableValue<? extends String> obs, String o, String n) {
+                applyFilter.run();
+            }
+        });
+
+        undoBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                if (!searchHistory.isEmpty()) {
+                    searchHistory.removeLast();
+                    if (!searchHistory.isEmpty()) {
+                        placeSearch.setText(searchHistory.peekLast());
+                        historyLabel.setText("Searches: " + searchHistory.size() + " | Last: \"" + searchHistory.peekLast() + "\" (Deque)");
+                    } else {
+                        placeSearch.setText("");
+                        historyLabel.setText("Search history: empty (Deque)");
+                    }
                 }
             }
         });
 
-        allCheck.setOnAction(e -> {
-            boolean on = allCheck.isSelected();
-            foodCheck.setSelected(on); shopCheck.setSelected(on);
-            serviceCheck.setSelected(on); leisureCheck.setSelected(on);
-            applyFilter.run();
+        allCheck.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                boolean on = allCheck.isSelected();
+                foodCheck.setSelected(on); shopCheck.setSelected(on);
+                serviceCheck.setSelected(on); leisureCheck.setSelected(on);
+                applyFilter.run();
+            }
         });
-        foodCheck.setOnAction(e -> applyFilter.run());
-        shopCheck.setOnAction(e -> applyFilter.run());
-        serviceCheck.setOnAction(e -> applyFilter.run());
-        leisureCheck.setOnAction(e -> applyFilter.run());
+        foodCheck.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilter.run(); }
+        });
+        shopCheck.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilter.run(); }
+        });
+        serviceCheck.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilter.run(); }
+        });
+        leisureCheck.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) { applyFilter.run(); }
+        });
 
         // fetch nearby places from Overpass API in background
         Thread fetchThread = new Thread(new Runnable() {
@@ -953,15 +1197,20 @@ public class ApartmentsTab {
                     }
                     System.out.println("Loaded " + allPlaces.size() + " nearby places");
 
-                    javafx.application.Platform.runLater(() -> {
-                        placeSearch.setDisable(false);
-                        undoBtn.setDisable(false);
-                        applyFilter.run();
+                    javafx.application.Platform.runLater(new Runnable() {
+                        public void run() {
+                            placeSearch.setDisable(false);
+                            undoBtn.setDisable(false);
+                            applyFilter.run();
+                        }
                     });
                 } catch (Exception e) {
-                    javafx.application.Platform.runLater(() -> {
-                        resultsBox.getChildren().clear();
-                        resultsBox.getChildren().add(new Label("Error: " + e.getMessage()));
+                    final String errorMsg = e.getMessage();
+                    javafx.application.Platform.runLater(new Runnable() {
+                        public void run() {
+                            resultsBox.getChildren().clear();
+                            resultsBox.getChildren().add(new Label("Error: " + errorMsg));
+                        }
                     });
                 }
             }
