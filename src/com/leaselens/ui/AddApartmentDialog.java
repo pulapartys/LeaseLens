@@ -730,21 +730,6 @@ public class AddApartmentDialog {
         warningStage.show();
     }
 
-    /**
-     * This set all amenity checkboxes on the apartment
-     * @param a the apartment to set amenities on
-     *
-     * pre-condition: a not null
-     * post-condition: amenities is set
-     */
-    private void setAmenities(Apartment a) {
-        a.setHasParking(parkingCheck.isSelected());
-        a.setHasLaundry(laundryCheck.isSelected());
-        a.setHasDishwasher(dishwasherCheck.isSelected());
-        a.setHasAC(acCheck.isSelected());
-        a.setPetFriendly(petCheck.isSelected());
-        a.setFurnished(furnishedCheck.isSelected());
-    }
 
     /**
      * This read the bedrooms combo value

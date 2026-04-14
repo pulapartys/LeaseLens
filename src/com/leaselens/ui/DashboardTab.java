@@ -9,7 +9,6 @@ import com.leaselens.model.Status;
 import com.leaselens.model.UserPreferences;
 import com.leaselens.app.ApartmentManager;
 import com.leaselens.calculators.ScoreCalculator;
-import com.leaselens.datastructures.ApartmentSorter;
 
 /**
  * This class is the Dashboard tab - the home screen of the app

@@ -297,6 +297,8 @@ public class ExpenseTab {
      */
     public void refresh() {
         String prev = apartmentCombo.getValue();
+        // close dropdown first so JavaFX dont crash
+        apartmentCombo.hide();
         apartmentCombo.getItems().clear();
         for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
             Apartment apt = service.getAllApartments().get(i);
