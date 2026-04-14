@@ -118,7 +118,11 @@ public class SettingsTab {
         // buttons
         Button applyBtn = new Button("Apply Preferences");
         applyBtn.setStyle("-fx-background-color: #3366cc; -fx-text-fill: white;");
-        applyBtn.setOnAction(e -> applyPreferences());
+        applyBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                applyPreferences();
+            }
+        });
         statusLabel = new Label("");
 
         HBox applyRow = new HBox(10);

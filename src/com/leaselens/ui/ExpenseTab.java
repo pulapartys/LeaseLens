@@ -108,7 +108,11 @@ public class ExpenseTab {
 
         Button calcBtn = new Button("Calculate Total Cost");
         calcBtn.setStyle("-fx-background-color: #3366cc; -fx-text-fill: white;");
-        calcBtn.setOnAction(e -> calculateExpenses());
+        calcBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                calculateExpenses();
+            }
+        });
 
         resultsBox = new VBox(10);
         resultsBox.setPadding(new Insets(10));
@@ -143,6 +147,7 @@ public class ExpenseTab {
     /**
      * This calculate all expenses and show results
      * It use the ExpenseHashMap to store categories
+     * It check for negative numbers and show all errors at once
      *
      * pre-condition: apartment is selected
      * post-condition: results is shown with totals
@@ -151,7 +156,9 @@ public class ExpenseTab {
         String selected = apartmentCombo.getValue();
         if (selected == null || selected.isEmpty()) {
             resultsBox.getChildren().clear();
-            resultsBox.getChildren().add(new Label("Please select an apartment first!"));
+            Label errLabel = new Label("Please select an apartment first!");
+            errLabel.setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+            resultsBox.getChildren().add(errLabel);
             resultsBox.setVisible(true);
             return;
         }
@@ -159,7 +166,48 @@ public class ExpenseTab {
         Apartment apt = findApartment(selected);
         if (apt == null) return;
 
-        // store expenses in HashMap
+        // first check all fields for errors before putting in HashMap
+        String[] fieldNames = {"Utilities", "Groceries", "Transport", "Internet / Phone", "Renter's Insurance", "Other"};
+        TextField[] fields = {utilitiesField, groceriesField, transportField, internetField, insuranceField, otherField};
+        String errorMsg = "";
+        boolean hasError = false;
+
+        // check each field one by one
+        for (int i = 0; i < fields.length; i++) {
+            String text = fields[i].getText().trim();
+            if (!text.isEmpty()) {
+                // check if it is a valid number
+                boolean isNumber = true;
+                double val = 0;
+                try {
+                    val = Double.parseDouble(text);
+                } catch (Exception e) {
+                    isNumber = false;
+                }
+
+                if (isNumber == false) {
+                    if (hasError) { errorMsg = errorMsg + "\n"; }
+                    errorMsg = errorMsg + "- " + fieldNames[i] + ": Please enter a valid number.";
+                    hasError = true;
+                } else if (val < 0) {
+                    if (hasError) { errorMsg = errorMsg + "\n"; }
+                    errorMsg = errorMsg + "- " + fieldNames[i] + ": Expenses cannot be negative.";
+                    hasError = true;
+                }
+            }
+        }
+
+        if (hasError) {
+            resultsBox.getChildren().clear();
+            Label errLabel = new Label(errorMsg);
+            errLabel.setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+            errLabel.setWrapText(true);
+            resultsBox.getChildren().add(errLabel);
+            resultsBox.setVisible(true);
+            return;
+        }
+
+        // all good, now store expenses in HashMap
         expenseMap.clear();
         try {
             expenseMap.put("Utilities", parseField(utilitiesField));
@@ -170,7 +218,9 @@ public class ExpenseTab {
             expenseMap.put("Other", parseField(otherField));
         } catch (Exception e) {
             resultsBox.getChildren().clear();
-            resultsBox.getChildren().add(new Label("Error: Please enter valid numbers!"));
+            Label errLabel = new Label("Error: Please enter valid numbers!");
+            errLabel.setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+            resultsBox.getChildren().add(errLabel);
             resultsBox.setVisible(true);
             return;
         }

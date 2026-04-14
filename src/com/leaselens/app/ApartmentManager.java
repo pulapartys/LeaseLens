@@ -86,91 +86,145 @@ public class ApartmentManager {
     }
 
     /**
-     * This method is trying to get API data for an apartment
-     * It get coordinates, walk score, and nearest T stop
-     * @param apartment the apartment to enrich with API data
+     * This method is trying to get API data for a apartment
+     * It try to get coordinates, walk score, crime, transit, parks
+     * If something fail it try one more time then give up
+     * It give back a string of warning messages so we tell user what happen
+     * @param apartment the apartment we want data for
+     * @return string with warning messages, empty string if all good
      *
-     * pre-condition: apartment should have address set
-     * post-condition: apartment have API data filled in (if APIs work)
+     * pre-condition: apartment should have address
+     * post-condition: apartment have API data if APIs working
      */
-    public void enrichWithApiData(Apartment apartment) {
-        // step 1: get coordinates first because all other APIs need them
+    public String enrichWithApiData(Apartment apartment) {
+        String warnings = "";
+
+        // step 1: get coordinates because all other APIs need it
+        // try first time
         double[] coords = null;
         try {
             coords = geocodingService.getCoordinates(apartment.getAddress());
-            if (coords != null) {
-                apartment.setLatitude(coords[0]);
-                apartment.setLongitude(coords[1]);
-                System.out.println("Geocoding done: " + coords[0] + ", " + coords[1]);
-            }
         } catch (Exception e) {
-            System.out.println("Error in geocoding: " + e.getMessage());
+            System.out.println("Geocoding try 1 fail: " + e.getMessage());
         }
-
-        // if we dont have coordinates we cant do the other steps
+        // if first time fail try one more time
         if (coords == null) {
-            System.out.println("No coordinates found, skipping other APIs");
-            return;
+            try {
+                coords = geocodingService.getCoordinates(apartment.getAddress());
+            } catch (Exception e) {
+                System.out.println("Geocoding try 2 fail: " + e.getMessage());
+            }
         }
+        // if still no coordinates we cant do anything
+        if (coords == null) {
+            System.out.println("No coordinates, skip other APIs");
+            warnings = warnings + "Could not find this address on the map. Please check your street address, city, and zip code. Walk Score, Crime Data, Transit, and Parks will not be available.\n";
+            return warnings;
+        }
+        // save the coordinates
+        apartment.setLatitude(coords[0]);
+        apartment.setLongitude(coords[1]);
+        System.out.println("Geocoding done: " + coords[0] + ", " + coords[1]);
 
         // step 2: get walk scores
+        int[] scores = null;
         try {
-            int[] scores = walkScoreService.getScores(
-                apartment.getAddress(), coords[0], coords[1]);
-            if (scores != null) {
-                apartment.setWalkScore(scores[0]);
-                apartment.setTransitScore(scores[1]);
-                apartment.setBikeScore(scores[2]);
-                if (scores.length > 3) {
-                    apartment.setNearbyFood(scores[3]);
-                    apartment.setNearbyShops(scores[4]);
-                    apartment.setNearbyServices(scores[5]);
-                    apartment.setNearbyTransit(scores[6]);
-                    apartment.setNearbyLeisure(scores[7]);
-                    apartment.setNearbyBike(scores[8]);
-                }
-                System.out.println("Walk scores done");
-            }
+            scores = walkScoreService.getScores(apartment.getAddress(), coords[0], coords[1]);
         } catch (Exception e) {
-            System.out.println("Error in walk scores: " + e.getMessage());
+            System.out.println("Walk score try 1 fail: " + e.getMessage());
+        }
+        if (scores == null) {
+            try {
+                scores = walkScoreService.getScores(apartment.getAddress(), coords[0], coords[1]);
+            } catch (Exception e) {
+                System.out.println("Walk score try 2 fail: " + e.getMessage());
+            }
+        }
+        if (scores != null) {
+            apartment.setWalkScore(scores[0]);
+            apartment.setTransitScore(scores[1]);
+            apartment.setBikeScore(scores[2]);
+            if (scores.length > 3) {
+                apartment.setNearbyFood(scores[3]);
+                apartment.setNearbyShops(scores[4]);
+                apartment.setNearbyServices(scores[5]);
+                apartment.setNearbyTransit(scores[6]);
+                apartment.setNearbyLeisure(scores[7]);
+                apartment.setNearbyBike(scores[8]);
+            }
+            System.out.println("Walk scores done");
+        } else {
+            warnings = warnings + "Walk Score: Could not get walkability scores. The server might be busy. Try editing this apartment later to refresh.\n";
         }
 
         // step 3: find nearest T stop
+        String[] nearStop = null;
         try {
-            String[] nearestStop = mbtaService.findNearestStop(coords[0], coords[1]);
-            if (nearestStop != null) {
-                apartment.setNearestTStop(nearestStop[0]);
-                apartment.setDistanceToT(Double.parseDouble(nearestStop[1]));
-                System.out.println("MBTA done: " + nearestStop[0]);
-            }
+            nearStop = mbtaService.findNearestStop(coords[0], coords[1]);
         } catch (Exception e) {
-            System.out.println("Error in MBTA: " + e.getMessage());
+            System.out.println("MBTA try 1 fail: " + e.getMessage());
+        }
+        if (nearStop == null) {
+            try {
+                nearStop = mbtaService.findNearestStop(coords[0], coords[1]);
+            } catch (Exception e) {
+                System.out.println("MBTA try 2 fail: " + e.getMessage());
+            }
+        }
+        if (nearStop != null) {
+            apartment.setNearestTStop(nearStop[0]);
+            apartment.setDistanceToT(Double.parseDouble(nearStop[1]));
+            System.out.println("MBTA done: " + nearStop[0]);
+        } else {
+            warnings = warnings + "Transit: Could not find nearby T stops. The MBTA service might be down right now.\n";
         }
 
-        // step 4: get crime / safety data
+        // step 4: get crime data
+        int[] crime = null;
         try {
-            int[] crimeData = crimeDataService.getCrimeData(coords[0], coords[1]);
-            if (crimeData != null) {
-                apartment.setSafetyScore(crimeData[0]);
-                apartment.setCrimeCount(crimeData[1]);
-                apartment.setCrimeBreakdown(crimeDataService.getLastBreakdown());
-                System.out.println("Crime data done");
-            }
+            crime = crimeDataService.getCrimeData(coords[0], coords[1]);
         } catch (Exception e) {
-            System.out.println("Error in crime data: " + e.getMessage());
+            System.out.println("Crime try 1 fail: " + e.getMessage());
+        }
+        if (crime == null) {
+            try {
+                crime = crimeDataService.getCrimeData(coords[0], coords[1]);
+            } catch (Exception e) {
+                System.out.println("Crime try 2 fail: " + e.getMessage());
+            }
+        }
+        if (crime != null) {
+            apartment.setSafetyScore(crime[0]);
+            apartment.setCrimeCount(crime[1]);
+            apartment.setCrimeBreakdown(crimeDataService.getLastBreakdown());
+            System.out.println("Crime data done");
+        } else {
+            warnings = warnings + "Safety: Could not load crime data. The Boston data service might be down. Safety score will show N/A.\n";
         }
 
-        // step 5: get nearby recreation areas
+        // step 5: get nearby parks
+        String[] rec = null;
         try {
-            String[] recData = recreationService.getNearbyRecreation(coords[0], coords[1]);
-            if (recData != null) {
-                apartment.setRecreationCount(Integer.parseInt(recData[0]));
-                apartment.setNearbyRecreation(recData[1]);
-                System.out.println("Recreation data done");
-            }
+            rec = recreationService.getNearbyRecreation(coords[0], coords[1]);
         } catch (Exception e) {
-            System.out.println("Error in recreation data: " + e.getMessage());
+            System.out.println("Parks try 1 fail: " + e.getMessage());
         }
+        if (rec == null) {
+            try {
+                rec = recreationService.getNearbyRecreation(coords[0], coords[1]);
+            } catch (Exception e) {
+                System.out.println("Parks try 2 fail: " + e.getMessage());
+            }
+        }
+        if (rec != null) {
+            apartment.setRecreationCount(Integer.parseInt(rec[0]));
+            apartment.setNearbyRecreation(rec[1]);
+            System.out.println("Parks done");
+        } else {
+            warnings = warnings + "Parks: Could not find nearby parks. The Recreation.gov service might be down.\n";
+        }
+
+        return warnings;
     }
 
     /**
@@ -201,16 +255,22 @@ public class ApartmentManager {
 
     /**
      * This method is changing the status of an apartment
+     * It check if the status change is allowed before doing it
      * @param id the apartment ID
      * @param newStatus the new status to set
-     * @return true if changed, false if apartment not found
+     * @return true if changed, false if apartment not found or transition not allowed
      *
      * pre-condition: id and newStatus should not be null
-     * post-condition: apartment status is updated
+     * post-condition: apartment status is updated if allowed
      */
     public boolean changeStatus(String id, Status newStatus) {
         Apartment apartment = searchMap.get(id);
         if (apartment == null) {
+            return false;
+        }
+
+        // check if this status change is allowed
+        if (isValidStatusChange(apartment.getStatus(), newStatus) == false) {
             return false;
         }
 
@@ -224,6 +284,81 @@ public class ApartmentManager {
         redoStack.clear();
 
         return true;
+    }
+
+    /**
+     * This method check if a status change is allowed
+     * NEW can go to SHORTLISTED or REJECTED
+     * SHORTLISTED can go to TOURED or REJECTED
+     * TOURED can go to SHORTLISTED or REJECTED
+     * REJECTED is final and cant go anywhere
+     * @param current the current status
+     * @param next the status user want to change to
+     * @return true if this change is ok, false if not allowed
+     *
+     * pre-condition: both status should not be null
+     * post-condition: return true or false
+     */
+    public boolean isValidStatusChange(Status current, Status next) {
+        // same status is not a change
+        if (current == next) {
+            return false;
+        }
+
+        // REJECTED is final - cant change from rejected
+        if (current == Status.REJECTED) {
+            return false;
+        }
+
+        // NEW can go to SHORTLISTED or REJECTED
+        if (current == Status.NEW) {
+            if (next == Status.SHORTLISTED || next == Status.REJECTED) {
+                return true;
+            }
+            return false;
+        }
+
+        // SHORTLISTED can go to TOURED or REJECTED
+        if (current == Status.SHORTLISTED) {
+            if (next == Status.TOURED || next == Status.REJECTED) {
+                return true;
+            }
+            return false;
+        }
+
+        // TOURED can go to SHORTLISTED or REJECTED
+        if (current == Status.TOURED) {
+            if (next == Status.SHORTLISTED || next == Status.REJECTED) {
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * This method give a friendly message about what status changes is allowed
+     * @param current the current status of the apartment
+     * @return a string telling user what they can change to
+     *
+     * pre-condition: current should not be null
+     * post-condition: return a helpful message string
+     */
+    public String getAllowedStatusMessage(Status current) {
+        if (current == Status.NEW) {
+            return "This apartment is NEW. You can Shortlist it or Reject it.";
+        }
+        if (current == Status.SHORTLISTED) {
+            return "This apartment is SHORTLISTED. You can mark it as Toured or Reject it.";
+        }
+        if (current == Status.TOURED) {
+            return "This apartment is TOURED. You can move it back to Shortlisted or Reject it.";
+        }
+        if (current == Status.REJECTED) {
+            return "This apartment is REJECTED. Rejected apartments cannot change status. Use Undo if you made a mistake.";
+        }
+        return "Unknown status.";
     }
 
     /**

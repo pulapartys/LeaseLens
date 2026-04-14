@@ -22,6 +22,7 @@ public class CompareTab {
     private ComboBox<String> combo2;
     private ComboBox<String> combo3;
     private VBox resultsBox;
+    private boolean isRefreshing;
 
     /**
      * This make the compare tab
@@ -57,9 +58,31 @@ public class CompareTab {
         combo3 = new ComboBox<String>();
         combo3.setPromptText("Optional third...");
 
+        // when user pick something in any combo, update other combos
+        // so they cant pick the same apartment twice
+        combo1.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                updateComboChoices();
+            }
+        });
+        combo2.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                updateComboChoices();
+            }
+        });
+        combo3.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                updateComboChoices();
+            }
+        });
+
         Button compareBtn = new Button("Compare");
         compareBtn.setStyle("-fx-background-color: #3366cc; -fx-text-fill: white;");
-        compareBtn.setOnAction(e -> doCompare());
+        compareBtn.setOnAction(new javafx.event.EventHandler<javafx.event.ActionEvent>() {
+            public void handle(javafx.event.ActionEvent e) {
+                doCompare();
+            }
+        });
 
         HBox selectRow = new HBox(10);
         selectRow.setPadding(new Insets(10));
@@ -101,8 +124,28 @@ public class CompareTab {
         String n3 = combo3.getValue();
 
         if (n1 == null || n2 == null) {
-            resultsBox.getChildren().add(new Label("Please select at least 2 apartments."));
+            Label errLabel = new Label("Please select at least 2 apartments.");
+            errLabel.setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+            resultsBox.getChildren().add(errLabel);
             return;
+        }
+
+        // safety check - make sure user did not pick same apartment
+        if (n1.equals(n2)) {
+            Label errLabel = new Label("Apartment 1 and Apartment 2 are the same. Please pick different apartments to compare.");
+            errLabel.setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+            errLabel.setWrapText(true);
+            resultsBox.getChildren().add(errLabel);
+            return;
+        }
+        if (n3 != null && !n3.equals("None")) {
+            if (n3.equals(n1) || n3.equals(n2)) {
+                Label errLabel = new Label("Apartment 3 is the same as another selection. Please pick a different apartment or choose 'None'.");
+                errLabel.setStyle("-fx-text-fill: #c62828; -fx-font-weight: bold;");
+                errLabel.setWrapText(true);
+                resultsBox.getChildren().add(errLabel);
+                return;
+            }
         }
 
         Apartment a1 = findByName(n1);
@@ -382,12 +425,101 @@ public class CompareTab {
     }
 
     /**
-     * This refresh the combo boxes with current apartments
+     * This update the combo boxes so user cant pick same apartment twice
+     * When user pick something in one combo, other combos hide that choice
+     * We save what user picked, rebuild the lists, then put the picks back
      *
      * pre-condition: none
-     * post-condition: combos is updated
+     * post-condition: combos only show apartments that is not picked in other combos
+     */
+    private void updateComboChoices() {
+        // dont run if we are already updating or refreshing
+        // because clearing items fires setOnAction which calls this again
+        if (isRefreshing) {
+            return;
+        }
+
+        // turn on flag so this method dont run again while we are inside it
+        isRefreshing = true;
+
+        // save what user already picked
+        String pick1 = combo1.getValue();
+        String pick2 = combo2.getValue();
+        String pick3 = combo3.getValue();
+
+        // get all apartment names
+        java.util.ArrayList<String> allNames = new java.util.ArrayList<String>();
+        for (int i = 0; i < service.getAllApartments().getCurrentSize(); i++) {
+            Apartment apt = service.getAllApartments().get(i);
+            String display = apt.getName() + " ($" + String.format("%.0f", apt.getRent()) + ")";
+            allNames.add(display);
+        }
+
+        // rebuild combo1 - show everything except what combo2 and combo3 picked
+        combo1.getItems().clear();
+        for (int i = 0; i < allNames.size(); i++) {
+            String name = allNames.get(i);
+            boolean taken = false;
+            if (name.equals(pick2)) { taken = true; }
+            if (name.equals(pick3) && !"None".equals(pick3)) { taken = true; }
+            if (taken == false) {
+                combo1.getItems().add(name);
+            }
+        }
+
+        // rebuild combo2 - show everything except what combo1 and combo3 picked
+        combo2.getItems().clear();
+        for (int i = 0; i < allNames.size(); i++) {
+            String name = allNames.get(i);
+            boolean taken = false;
+            if (name.equals(pick1)) { taken = true; }
+            if (name.equals(pick3) && !"None".equals(pick3)) { taken = true; }
+            if (taken == false) {
+                combo2.getItems().add(name);
+            }
+        }
+
+        // rebuild combo3 - show "None" plus everything except what combo1 and combo2 picked
+        combo3.getItems().clear();
+        combo3.getItems().add("None");
+        for (int i = 0; i < allNames.size(); i++) {
+            String name = allNames.get(i);
+            boolean taken = false;
+            if (name.equals(pick1)) { taken = true; }
+            if (name.equals(pick2)) { taken = true; }
+            if (taken == false) {
+                combo3.getItems().add(name);
+            }
+        }
+
+        // put the saved picks back
+        if (pick1 != null && combo1.getItems().contains(pick1)) {
+            combo1.setValue(pick1);
+        }
+        if (pick2 != null && combo2.getItems().contains(pick2)) {
+            combo2.setValue(pick2);
+        }
+        if (pick3 != null && combo3.getItems().contains(pick3)) {
+            combo3.setValue(pick3);
+        } else {
+            combo3.setValue("None");
+        }
+
+        // turn off flag so next user pick works
+        isRefreshing = false;
+    }
+
+    /**
+     * This refresh the combo boxes with current apartments
+     * It reset all picks and show all apartments in all combos
+     *
+     * pre-condition: none
+     * post-condition: combos is updated with all apartments
      */
     public void refresh() {
+        // turn on flag so updateComboChoices does not run during refresh
+        isRefreshing = true;
+
         combo1.getItems().clear();
         combo2.getItems().clear();
         combo3.getItems().clear();
@@ -399,7 +531,12 @@ public class CompareTab {
             combo2.getItems().add(display);
             combo3.getItems().add(display);
         }
+        combo1.setValue(null);
+        combo2.setValue(null);
         combo3.setValue("None");
+
+        // turn off flag so user picks work again
+        isRefreshing = false;
     }
 
     /**
